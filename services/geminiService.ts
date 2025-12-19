@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-import { Flashcard, QuizQuestion, CareerPlan, MindMapNode } from "../types";
+import { Flashcard, QuizQuestion, CareerPlan, CuratedPath, MindMapNode } from "../types";
 
 export interface LogicPuzzle {
   type: string;
@@ -78,55 +78,6 @@ export const generateStudyMaterial = async (
   });
 
   return JSON.parse(cleanJsonResponse(response.text || '{"flashcards":[], "quiz":[]}'));
-};
-
-export const generateMindMapData = async (topic: string, content: string): Promise<MindMapNode> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
-    contents: `Create a hierarchical mind map structure for the topic: "${topic}". 
-    Based on this data: "${content}". 
-    Structure it with a central node, branching into major categories, and then sub-details. 
-    MAX 3 LEVELS. Each node must have a short label and a brief description.`,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          id: { type: Type.STRING },
-          label: { type: Type.STRING },
-          description: { type: Type.STRING },
-          children: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                id: { type: Type.STRING },
-                label: { type: Type.STRING },
-                description: { type: Type.STRING },
-                children: {
-                  type: Type.ARRAY,
-                  items: {
-                    type: Type.OBJECT,
-                    properties: {
-                      id: { type: Type.STRING },
-                      label: { type: Type.STRING },
-                      description: { type: Type.STRING }
-                    },
-                    required: ["id", "label"]
-                  }
-                }
-              },
-              required: ["id", "label"]
-            }
-          }
-        },
-        required: ["id", "label"]
-      }
-    }
-  });
-
-  return JSON.parse(cleanJsonResponse(response.text || "{}"));
 };
 
 export const enhanceNote = async (content: string): Promise<NoteEnhancement> => {
@@ -236,4 +187,97 @@ export const generateAdImage = async (prompt: string): Promise<string> => {
   });
   const base64 = response.candidates?.[0]?.content?.parts.find(p => p.inlineData)?.inlineData?.data;
   return base64 ? `data:image/png;base64,${base64}` : "";
+};
+
+/**
+ * AI Curator: Generates a structured learning path for any given topic.
+ */
+export const generateCuratedPath = async (topic: string): Promise<CuratedPath> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-flash-preview',
+    contents: `You are a world-class educational curator. Create a structured learning roadmap for the topic: "${topic}".
+    The roadmap should be professional, logical, and broken down into sequential modules.`,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          topic: { type: Type.STRING },
+          description: { type: Type.STRING },
+          modules: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                title: { type: Type.STRING },
+                synthesis: { type: Type.STRING },
+                objectives: { type: Type.ARRAY, items: { type: Type.STRING } },
+                duration: { type: Type.STRING }
+              },
+              required: ["title", "synthesis", "objectives", "duration"]
+            }
+          },
+          masteryOutcome: { type: Type.STRING }
+        },
+        required: ["topic", "description", "modules", "masteryOutcome"]
+      }
+    }
+  });
+
+  return JSON.parse(cleanJsonResponse(response.text || "{}")) as CuratedPath;
+};
+
+/**
+ * AI Mind Mapper: Decomposes a topic into a hierarchical semantic map.
+ */
+export const generateMindMapData = async (topic: string, content: string): Promise<MindMapNode> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-flash-preview',
+    contents: `You are a semantic analysis expert. Perform a deep hierarchical decomposition of the following topic and content into a structured mind map format.
+    
+    TOPIC: "${topic}"
+    CONTENT: "${content}"
+    
+    Return a recursive JSON structure. Each node must have a unique 'id', a clear 'label', and an optional 'description'.`,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          id: { type: Type.STRING },
+          label: { type: Type.STRING },
+          description: { type: Type.STRING },
+          children: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                id: { type: Type.STRING },
+                label: { type: Type.STRING },
+                description: { type: Type.STRING },
+                children: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      id: { type: Type.STRING },
+                      label: { type: Type.STRING },
+                      description: { type: Type.STRING }
+                    },
+                    required: ["id", "label"]
+                  }
+                }
+              },
+              required: ["id", "label"]
+            }
+          }
+        },
+        required: ["id", "label"]
+      }
+    }
+  });
+
+  return JSON.parse(cleanJsonResponse(response.text || "{}")) as MindMapNode;
 };

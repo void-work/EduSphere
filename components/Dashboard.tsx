@@ -1,8 +1,7 @@
 
-import React, { useState, useEffect } from 'react';
-import { BookOpen, Briefcase, ClipboardCheck, Mic, PenTool, Zap, Gamepad2, Sparkles, TrendingUp, Clock, RefreshCw, Star, ChevronRight, Brain, Layers, Network } from 'lucide-react';
+import React from 'react';
+import { BookOpen, Briefcase, ClipboardCheck, Mic, PenTool, Zap, Sparkles, TrendingUp, Star, ChevronRight, Brain, Layers } from 'lucide-react';
 import { ToolType } from '../types';
-import { generateAdImage } from '../services/geminiService';
 
 interface DashboardProps {
   onSelectTool: (tool: ToolType) => void;
@@ -10,25 +9,6 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ onSelectTool, userName }) => {
-  const [adImage, setAdImage] = useState<string | null>(null);
-  const [adLoading, setAdLoading] = useState(false);
-
-  const loadAd = async () => {
-    setAdLoading(true);
-    try {
-      const url = await generateAdImage("Premium AI Tutoring & Advanced Quantum Theory Course");
-      setAdImage(url);
-    } catch (err) {
-      console.error("Ad generation failed", err);
-    } finally {
-      setAdLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadAd();
-  }, []);
-
   return (
     <div className="space-y-12 animate-in fade-in duration-1000">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-8">
@@ -50,27 +30,20 @@ const Dashboard: React.FC<DashboardProps> = ({ onSelectTool, userName }) => {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-        <div className="lg:col-span-8 space-y-12">
+      <div className="grid grid-cols-1 gap-12">
+        <div className="space-y-12">
           <div>
             <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-8 flex items-center gap-4 px-2">
               <Zap className="w-4 h-4 text-indigo-600" />
               Intelligence Core Launchpad
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               <ToolCard 
                 icon={<BookOpen className="w-7 h-7" />}
                 title="Textbook AI"
                 desc="Deep Extraction"
                 onClick={() => onSelectTool(ToolType.TEXTBOOK)}
                 accentColor="bg-blue-600"
-              />
-              <ToolCard 
-                icon={<Network className="w-7 h-7" />}
-                title="MindMap"
-                desc="Semantic Mapping"
-                onClick={() => onSelectTool(ToolType.MINDMAP)}
-                accentColor="bg-indigo-600"
               />
               <ToolCard 
                 icon={<Layers className="w-7 h-7" />}
@@ -100,6 +73,20 @@ const Dashboard: React.FC<DashboardProps> = ({ onSelectTool, userName }) => {
                 onClick={() => onSelectTool(ToolType.CAREER)}
                 accentColor="bg-emerald-500"
               />
+              <ToolCard 
+                icon={<PenTool className="w-7 h-7" />}
+                title="Smart Notes"
+                desc="Cognitive Base"
+                onClick={() => onSelectTool(ToolType.NOTES)}
+                accentColor="bg-violet-600"
+              />
+              <ToolCard 
+                icon={<Sparkles className="w-7 h-7" />}
+                title="AI Curator"
+                desc="Content Synthesis"
+                onClick={() => onSelectTool(ToolType.CURATOR)}
+                accentColor="bg-amber-500"
+              />
             </div>
           </div>
           
@@ -108,73 +95,29 @@ const Dashboard: React.FC<DashboardProps> = ({ onSelectTool, userName }) => {
                 <Brain className="w-32 h-32" />
              </div>
              <h3 className="text-slate-400 font-black text-[10px] uppercase tracking-[0.4em] mb-8">Recent Cognitive Shifts</h3>
-             <div className="space-y-6 relative z-10">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
                 {[
-                  { label: "Molecular Biology Quiz", xp: "+50 XP", date: "2h ago" },
-                  { label: "Roman History Mind Map", xp: "+180 XP", date: "Just now" },
-                  { label: "Infographic Generation", xp: "Completed", date: "1h ago" }
+                  { label: "Molecular Biology Quiz", xp: "+50 XP", date: "2h ago", icon: <ClipboardCheck className="w-4 h-4" /> },
+                  { label: "Infographic Generation", xp: "Completed", date: "1h ago", icon: <Layers className="w-4 h-4" /> },
+                  { label: "AI Curation Session", xp: "+120 XP", date: "Just now", icon: <Sparkles className="w-4 h-4" /> },
+                  { label: "Quantum Theory Notes", xp: "+90 XP", date: "3h ago", icon: <PenTool className="w-4 h-4" /> }
                 ].map((item, i) => (
-                  <div key={i} className="flex items-center justify-between p-5 bg-slate-50/50 rounded-2xl border border-slate-100 hover:bg-white hover:shadow-lg transition-all cursor-default group">
+                  <div key={i} className="flex items-center justify-between p-6 bg-slate-50/50 rounded-2xl border border-slate-100 hover:bg-white hover:shadow-lg transition-all cursor-default group">
                     <div className="flex items-center gap-4">
-                      <div className="w-2.5 h-2.5 rounded-full bg-indigo-600" />
-                      <span className="text-slate-900 font-bold text-sm">{item.label}</span>
+                      <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-slate-400 group-hover:text-indigo-600 transition-colors shadow-sm">
+                        {item.icon}
+                      </div>
+                      <div>
+                        <span className="text-slate-900 font-bold text-sm block">{item.label}</span>
+                        <span className="text-slate-400 font-bold text-[10px] uppercase">{item.date}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="text-right">
                       <span className="text-indigo-600 font-black text-[10px] uppercase tracking-widest">{item.xp}</span>
-                      <span className="text-slate-400 font-bold text-[10px] uppercase">{item.date}</span>
                     </div>
                   </div>
                 ))}
              </div>
-          </div>
-        </div>
-
-        <div className="lg:col-span-4 space-y-10">
-          <div className="bg-white rounded-[3rem] shadow-2xl overflow-hidden relative group transition-all hover:-translate-y-2 border border-slate-100">
-            <div className="aspect-[4/5] bg-slate-50 relative overflow-hidden flex items-center justify-center">
-              {adLoading ? (
-                <div className="flex flex-col items-center gap-6 text-slate-300">
-                  <RefreshCw className="w-12 h-12 animate-spin text-indigo-600" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.4em]">Neural Render Active</span>
-                </div>
-              ) : adImage ? (
-                <>
-                  <img 
-                    src={adImage} 
-                    alt="Premium Course Promo" 
-                    className="w-full h-full object-cover brightness-105" 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-white via-white/5 to-transparent" />
-                  <div className="absolute bottom-10 left-10 right-10 text-slate-900">
-                    <div className="flex items-center gap-3 mb-3">
-                        <div className="w-2 h-2 bg-indigo-600 rounded-full animate-ping" />
-                        <span className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.4em]">Exclusive Access</span>
-                    </div>
-                    <h3 className="text-4xl font-black leading-none tracking-tighter">Premium Cognition</h3>
-                  </div>
-                </>
-              ) : (
-                <div className="text-slate-100 font-black italic tracking-tighter text-4xl uppercase">Intelligence Engine</div>
-              )}
-            </div>
-
-            <div className="p-10 bg-white">
-              <button 
-                onClick={() => window.open('https://ai.google.dev/gemini-api/docs/billing', '_blank')}
-                className="w-full py-6 bg-indigo-600 text-white rounded-[1.5rem] font-black text-sm uppercase tracking-widest transition-all hover:bg-indigo-700 flex items-center justify-center gap-4 shadow-xl shadow-indigo-100 mb-8"
-              >
-                Expand Your Mind <Sparkles className="w-5 h-5 text-amber-400" />
-              </button>
-              <p className="text-slate-500 text-sm mb-10 leading-relaxed font-bold">
-                Unlock specialized neural tracks curated for world-class industry standards.
-              </p>
-              <button 
-                onClick={loadAd}
-                className="w-full py-2 text-[10px] font-black text-slate-400 hover:text-indigo-600 uppercase tracking-[0.5em] transition-colors"
-              >
-                Refresh Neural Link
-              </button>
-            </div>
           </div>
         </div>
       </div>

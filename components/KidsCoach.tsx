@@ -289,18 +289,18 @@ const KidsCoach: React.FC = () => {
         </div>
 
         <div className="space-y-8">
-          <div className="bg-black p-8 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden group">
-            <div className={`absolute -right-10 -bottom-10 w-40 h-40 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700 ${isOlympiad ? 'bg-yellow-600/20' : 'bg-indigo-600/20'}`} />
+          <div className="bg-white/80 backdrop-blur-xl p-8 rounded-[2.5rem] text-slate-900 border border-slate-100 shadow-2xl relative overflow-hidden group">
+            <div className={`absolute -right-10 -bottom-10 w-40 h-40 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700 ${isOlympiad ? 'bg-yellow-400/10' : 'bg-indigo-400/10'}`} />
             
-            <h4 className={`font-black text-[10px] uppercase tracking-[0.4em] mb-8 flex items-center gap-4 ${isOlympiad ? 'text-yellow-500' : 'text-indigo-400'}`}>
+            <h4 className={`font-black text-[10px] uppercase tracking-[0.4em] mb-8 flex items-center gap-4 ${isOlympiad ? 'text-yellow-600' : 'text-indigo-600'}`}>
               <Sparkles className="w-4 h-4" /> Neural Progress
             </h4>
-            <div className="space-y-6">
+            <div className="space-y-6 relative z-10">
                 <div className="flex justify-between items-end mb-2">
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Experience Points</span>
-                  <span className="text-xs font-black text-white">{xp} / {level * 200}</span>
+                  <span className="text-xs font-black text-slate-900">{xp} / {level * 200}</span>
                 </div>
-                <div className="h-2.5 bg-slate-800 rounded-full overflow-hidden">
+                <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
                   <div 
                     className={`h-full transition-all duration-1000 ease-out ${isOlympiad ? 'bg-gradient-to-r from-yellow-500 to-amber-600' : 'bg-gradient-to-r from-indigo-500 to-purple-500'}`}
                     style={{ width: `${Math.min((xp / (level * 200)) * 100, 100)}%` }} 
@@ -378,11 +378,11 @@ const QuestItem: React.FC<{ label: string, done: boolean }> = ({ label, done }) 
     <div className={`w-6 h-6 rounded-xl border-2 transition-all shrink-0 ${
       done 
         ? 'bg-emerald-500 border-emerald-500 text-white scale-110 shadow-lg shadow-emerald-500/20' 
-        : 'border-slate-700 group-hover:border-indigo-500'
+        : 'border-slate-200 group-hover:border-indigo-500'
     } flex items-center justify-center`}>
       {done && <Check className="w-3.5 h-3.5" />}
     </div>
-    <span className={`text-[11px] font-black uppercase tracking-wider ${done ? 'text-slate-500 line-through opacity-50' : 'text-slate-200'}`}>
+    <span className={`text-[11px] font-black uppercase tracking-wider ${done ? 'text-slate-400 line-through opacity-50' : 'text-slate-600'}`}>
       {label}
     </span>
   </div>

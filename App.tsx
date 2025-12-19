@@ -10,7 +10,6 @@ import {
   Brain, 
   Gamepad2, 
   Layers, 
-  Network,
   User as UserIcon, 
   LogOut,
   Sparkles,
@@ -26,7 +25,7 @@ import KidsCoach from './components/KidsCoach';
 import Notetaker from './components/Notetaker';
 import Dashboard from './components/Dashboard';
 import InfographicCreator from './components/InfographicCreator';
-import MindMapCreator from './components/MindMapCreator';
+import Curator from './components/Curator';
 
 const App: React.FC = () => {
   const [activeTool, setActiveTool] = useState<ToolType>(ToolType.DASHBOARD);
@@ -93,7 +92,7 @@ const App: React.FC = () => {
       case ToolType.KIDS: return <KidsCoach />;
       case ToolType.NOTES: return <Notetaker />;
       case ToolType.INFOGRAPHIC: return <InfographicCreator />;
-      case ToolType.MINDMAP: return <MindMapCreator />;
+      case ToolType.CURATOR: return <Curator />;
       default: return <Dashboard onSelectTool={setActiveTool} userName={user?.name || 'Explorer'} />;
     }
   };
@@ -128,10 +127,10 @@ const App: React.FC = () => {
             onClick={() => setActiveTool(ToolType.TEXTBOOK)} 
           />
           <NavItem 
-            icon={<Network className="w-5 h-5" />} 
-            label="MindMap Neural" 
-            active={activeTool === ToolType.MINDMAP} 
-            onClick={() => setActiveTool(ToolType.MINDMAP)} 
+            icon={<Sparkles className="w-5 h-5 text-indigo-400" />} 
+            label="AI Curator" 
+            active={activeTool === ToolType.CURATOR} 
+            onClick={() => setActiveTool(ToolType.CURATOR)} 
           />
           <NavItem 
             icon={<Layers className="w-5 h-5" />} 

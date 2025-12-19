@@ -12,7 +12,7 @@ export enum ToolType {
   KIDS = 'KIDS',
   DETECTOR = 'DETECTOR',
   INFOGRAPHIC = 'INFOGRAPHIC',
-  MINDMAP = 'MINDMAP'
+  CURATOR = 'CURATOR'
 }
 
 export interface User {
@@ -53,6 +53,21 @@ export interface ExamResult {
   userAnswers: (string | null)[];
 }
 
+export interface CuratedModule {
+  title: string;
+  synthesis: string;
+  objectives: string[];
+  duration: string;
+}
+
+export interface CuratedPath {
+  topic: string;
+  description: string;
+  modules: CuratedModule[];
+  masteryOutcome: string;
+}
+
+// Add MindMapNode for semantic hierarchical visualization
 export interface MindMapNode {
   id: string;
   label: string;
