@@ -1,14 +1,20 @@
 
 import React from 'react';
-import { BookOpen, Briefcase, ClipboardCheck, Mic, PenTool, Zap, Sparkles, TrendingUp, Star, ChevronRight, Brain, Layers } from 'lucide-react';
-import { ToolType } from '../types';
+// Added Gamepad2 to the imports from lucide-react
+import { BookOpen, Briefcase, ClipboardCheck, Mic, PenTool, Zap, Sparkles, TrendingUp, Star, ChevronRight, Brain, Layers, Gamepad2 } from 'lucide-react';
+import { ToolType, User } from '../types';
 
 interface DashboardProps {
   onSelectTool: (tool: ToolType) => void;
-  userName: string;
+  user: User | null;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ onSelectTool, userName }) => {
+const Dashboard: React.FC<DashboardProps> = ({ onSelectTool, user }) => {
+  const userName = user?.name || 'Explorer';
+  const xp = user?.xp || 0;
+  const streak = user?.streak || 0;
+  const history = user?.cognitiveShifts || [];
+
   return (
     <div className="space-y-12 animate-in fade-in duration-1000">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-8">
@@ -21,11 +27,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onSelectTool, userName }) => {
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3 bg-white text-amber-600 px-6 py-4 rounded-[1.5rem] font-black border border-slate-200 shadow-xl cursor-default transition-all hover:scale-105">
             <Star className="w-6 h-6 fill-amber-500" />
-            <span className="text-lg">2,450 XP</span>
+            <span className="text-lg">{xp} XP</span>
           </div>
           <div className="flex items-center gap-3 bg-white text-indigo-600 px-6 py-4 rounded-[1.5rem] font-black border border-slate-200 shadow-xl cursor-default">
             <TrendingUp className="w-6 h-6" />
-            <span className="text-lg">7 Day Streak</span>
+            <span className="text-lg">{streak} Day Streak</span>
           </div>
         </div>
       </header>
@@ -38,55 +44,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onSelectTool, userName }) => {
               Intelligence Core Launchpad
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              <ToolCard 
-                icon={<BookOpen className="w-7 h-7" />}
-                title="Textbook AI"
-                desc="Deep Extraction"
-                onClick={() => onSelectTool(ToolType.TEXTBOOK)}
-                accentColor="bg-blue-600"
-              />
-              <ToolCard 
-                icon={<Layers className="w-7 h-7" />}
-                title="Infographic Pro"
-                desc="Neural Visualization"
-                onClick={() => onSelectTool(ToolType.INFOGRAPHIC)}
-                accentColor="bg-emerald-600"
-              />
-              <ToolCard 
-                icon={<Mic className="w-7 h-7" />}
-                title="Live Tutor"
-                desc="Audio Mentoring"
-                onClick={() => onSelectTool(ToolType.TUTOR)}
-                accentColor="bg-orange-500"
-              />
-              <ToolCard 
-                icon={<ClipboardCheck className="w-7 h-7" />}
-                title="Exam Sim"
-                desc="Atomic Testing"
-                onClick={() => onSelectTool(ToolType.EXAM)}
-                accentColor="bg-indigo-600"
-              />
-              <ToolCard 
-                icon={<Briefcase className="w-7 h-7" />}
-                title="Skill Bridge"
-                desc="Career Mapping"
-                onClick={() => onSelectTool(ToolType.CAREER)}
-                accentColor="bg-emerald-500"
-              />
-              <ToolCard 
-                icon={<PenTool className="w-7 h-7" />}
-                title="Smart Notes"
-                desc="Cognitive Base"
-                onClick={() => onSelectTool(ToolType.NOTES)}
-                accentColor="bg-violet-600"
-              />
-              <ToolCard 
-                icon={<Sparkles className="w-7 h-7" />}
-                title="AI Curator"
-                desc="Content Synthesis"
-                onClick={() => onSelectTool(ToolType.CURATOR)}
-                accentColor="bg-amber-500"
-              />
+              <ToolCard icon={<BookOpen className="w-7 h-7" />} title="Textbook AI" desc="Deep Extraction" onClick={() => onSelectTool(ToolType.TEXTBOOK)} accentColor="bg-blue-600" />
+              <ToolCard icon={<Layers className="w-7 h-7" />} title="Infographic Pro" desc="Neural Visualization" onClick={() => onSelectTool(ToolType.INFOGRAPHIC)} accentColor="bg-emerald-600" />
+              <ToolCard icon={<Mic className="w-7 h-7" />} title="Live Tutor" desc="Audio Mentoring" onClick={() => onSelectTool(ToolType.TUTOR)} accentColor="bg-orange-500" />
+              <ToolCard icon={<ClipboardCheck className="w-7 h-7" />} title="Exam Sim" desc="Atomic Testing" onClick={() => onSelectTool(ToolType.EXAM)} accentColor="bg-indigo-600" />
+              <ToolCard icon={<Briefcase className="w-7 h-7" />} title="Skill Bridge" desc="Career Mapping" onClick={() => onSelectTool(ToolType.CAREER)} accentColor="bg-emerald-500" />
+              <ToolCard icon={<PenTool className="w-7 h-7" />} title="Smart Notes" desc="Cognitive Base" onClick={() => onSelectTool(ToolType.NOTES)} accentColor="bg-violet-600" />
+              <ToolCard icon={<Sparkles className="w-7 h-7" />} title="AI Curator" desc="Content Synthesis" onClick={() => onSelectTool(ToolType.CURATOR)} accentColor="bg-amber-500" />
+              <ToolCard icon={<Gamepad2 className="w-7 h-7" />} title="Kids Logic" desc="Neural Growth" onClick={() => onSelectTool(ToolType.KIDS)} accentColor="bg-pink-600" />
             </div>
           </div>
           
@@ -96,27 +61,28 @@ const Dashboard: React.FC<DashboardProps> = ({ onSelectTool, userName }) => {
              </div>
              <h3 className="text-slate-400 font-black text-[10px] uppercase tracking-[0.4em] mb-8">Recent Cognitive Shifts</h3>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
-                {[
-                  { label: "Molecular Biology Quiz", xp: "+50 XP", date: "2h ago", icon: <ClipboardCheck className="w-4 h-4" /> },
-                  { label: "Infographic Generation", xp: "Completed", date: "1h ago", icon: <Layers className="w-4 h-4" /> },
-                  { label: "AI Curation Session", xp: "+120 XP", date: "Just now", icon: <Sparkles className="w-4 h-4" /> },
-                  { label: "Quantum Theory Notes", xp: "+90 XP", date: "3h ago", icon: <PenTool className="w-4 h-4" /> }
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center justify-between p-6 bg-slate-50/50 rounded-2xl border border-slate-100 hover:bg-white hover:shadow-lg transition-all cursor-default group">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-slate-400 group-hover:text-indigo-600 transition-colors shadow-sm">
-                        {item.icon}
-                      </div>
-                      <div>
-                        <span className="text-slate-900 font-bold text-sm block">{item.label}</span>
-                        <span className="text-slate-400 font-bold text-[10px] uppercase">{item.date}</span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-indigo-600 font-black text-[10px] uppercase tracking-widest">{item.xp}</span>
-                    </div>
+                {history.length === 0 ? (
+                  <div className="col-span-full py-12 text-center opacity-30 italic font-medium">
+                    No recent cognitive shifts recorded. Start exploring modules to build your profile.
                   </div>
-                ))}
+                ) : (
+                  history.map((item, i) => (
+                    <div key={i} className="flex items-center justify-between p-6 bg-slate-50/50 rounded-2xl border border-slate-100 hover:bg-white hover:shadow-lg transition-all cursor-default group">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-slate-400 group-hover:text-indigo-600 transition-colors shadow-sm">
+                          {getIcon(item.type)}
+                        </div>
+                        <div>
+                          <span className="text-slate-900 font-bold text-sm block">{item.label}</span>
+                          <span className="text-slate-400 font-bold text-[10px] uppercase">{item.date}</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-indigo-600 font-black text-[10px] uppercase tracking-widest">{item.xp}</span>
+                      </div>
+                    </div>
+                  ))
+                )}
              </div>
           </div>
         </div>
@@ -124,6 +90,18 @@ const Dashboard: React.FC<DashboardProps> = ({ onSelectTool, userName }) => {
     </div>
   );
 };
+
+const getIcon = (type: ToolType) => {
+  switch (type) {
+    case ToolType.TEXTBOOK: return <BookOpen className="w-4 h-4" />;
+    case ToolType.INFOGRAPHIC: return <Layers className="w-4 h-4" />;
+    case ToolType.EXAM: return <ClipboardCheck className="w-4 h-4" />;
+    case ToolType.CURATOR: return <Sparkles className="w-4 h-4" />;
+    case ToolType.NOTES: return <PenTool className="w-4 h-4" />;
+    case ToolType.KIDS: return <Gamepad2 className="w-4 h-4" />;
+    default: return <Brain className="w-4 h-4" />;
+  }
+}
 
 const ToolCard: React.FC<{ icon: React.ReactNode, title: string, desc: string, onClick: () => void, accentColor: string }> = ({ icon, title, desc, onClick, accentColor }) => (
   <button 
@@ -134,12 +112,8 @@ const ToolCard: React.FC<{ icon: React.ReactNode, title: string, desc: string, o
       {icon}
     </div>
     <div>
-      <h3 className="font-black text-slate-900 text-xl tracking-tight mb-1">
-        {title}
-      </h3>
-      <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">
-        {desc}
-      </p>
+      <h3 className="font-black text-slate-900 text-xl tracking-tight mb-1">{title}</h3>
+      <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">{desc}</p>
     </div>
     <div className="absolute bottom-8 right-8">
        <div className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0 border border-slate-200">

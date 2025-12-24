@@ -15,11 +15,22 @@ export enum ToolType {
   CURATOR = 'CURATOR'
 }
 
+export interface CognitiveShift {
+  label: string;
+  xp: string;
+  date: string;
+  type: ToolType;
+}
+
 export interface User {
   id: string;
   name: string;
   email: string;
   isLoggedIn: boolean;
+  xp: number;
+  streak: number;
+  lastActive: string;
+  cognitiveShifts: CognitiveShift[];
 }
 
 export interface Flashcard {
@@ -67,7 +78,6 @@ export interface CuratedPath {
   masteryOutcome: string;
 }
 
-// Add MindMapNode for semantic hierarchical visualization
 export interface MindMapNode {
   id: string;
   label: string;
