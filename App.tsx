@@ -13,7 +13,8 @@ import {
   User as UserIcon, 
   LogOut,
   Sparkles,
-  ChevronRight
+  ChevronRight,
+  Network
 } from 'lucide-react';
 import { ToolType, User, CognitiveShift } from './types';
 import TextbookCompanion from './components/TextbookCompanion';
@@ -26,6 +27,7 @@ import Notetaker from './components/Notetaker';
 import Dashboard from './components/Dashboard';
 import InfographicCreator from './components/InfographicCreator';
 import Curator from './components/Curator';
+import MindMapCreator from './components/MindMapCreator';
 
 const App: React.FC = () => {
   const [activeTool, setActiveTool] = useState<ToolType>(ToolType.DASHBOARD);
@@ -157,6 +159,7 @@ const App: React.FC = () => {
       case ToolType.NOTES: return <Notetaker onEnhance={(xp) => updateStats(xp, "Smart Note Enhancement", ToolType.NOTES)} />;
       case ToolType.INFOGRAPHIC: return <InfographicCreator onComplete={(xp) => updateStats(xp, "Infographic Synthesis", ToolType.INFOGRAPHIC)} />;
       case ToolType.CURATOR: return <Curator onComplete={(xp) => updateStats(xp, "Roadmap Generation", ToolType.CURATOR)} />;
+      case ToolType.MINDMAP: return <MindMapCreator />;
       default: return <Dashboard onSelectTool={setActiveTool} user={user} />;
     }
   };
@@ -176,6 +179,7 @@ const App: React.FC = () => {
           <div className="mt-8 mb-4 px-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Curriculum</div>
           <NavItem icon={<BookOpen className="w-5 h-5" />} label="Textbook AI" active={activeTool === ToolType.TEXTBOOK} onClick={() => setActiveTool(ToolType.TEXTBOOK)} />
           <NavItem icon={<Sparkles className="w-5 h-5 text-indigo-400" />} label="AI Curator" active={activeTool === ToolType.CURATOR} onClick={() => setActiveTool(ToolType.CURATOR)} />
+          <NavItem icon={<Network className="w-5 h-5" />} label="MindMap Neural" active={activeTool === ToolType.MINDMAP} onClick={() => setActiveTool(ToolType.MINDMAP)} />
           <NavItem icon={<Layers className="w-5 h-5" />} label="Infographic Pro" active={activeTool === ToolType.INFOGRAPHIC} onClick={() => setActiveTool(ToolType.INFOGRAPHIC)} />
           <NavItem icon={<Briefcase className="w-5 h-5" />} label="Career Bridge" active={activeTool === ToolType.CAREER} onClick={() => setActiveTool(ToolType.CAREER)} />
           <NavItem icon={<ClipboardCheck className="w-5 h-5" />} label="Exam Sim" active={activeTool === ToolType.EXAM} onClick={() => setActiveTool(ToolType.EXAM)} />

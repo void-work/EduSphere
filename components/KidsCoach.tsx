@@ -106,7 +106,7 @@ const KidsCoach: React.FC<KidsCoachProps> = ({ onXpGain }) => {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <DifficultyCard title="Beginner" desc="Fun & Simple Patterns" icon={<Sprout className="w-8 h-8 text-emerald-500" />} color="border-emerald-100 hover:border-emerald-500" onClick={() => handleStartMission('beginner')} badge="Easy" />
-          <DifficultyCard title="Intermediate" desc="Brain-Boosting Sequences" icon={<Rocket className="w-8 h-8 text-blue-500" />} color="border-blue-100 hover:border-blue-500" onClick={() => handleStartMission('intermediate')} badge="Tricky" />
+          <DifficultyCard title="Intermediate" desc="Brain-Boosting Sequences" icon={<Rocket className="w-8 h-8 text-blue-500" />} color="border-blue-100 hover:border-blue-100" onClick={() => handleStartMission('intermediate')} badge="Tricky" />
           <DifficultyCard title="Advanced" desc="Expert Logic Challenges" icon={<Brain className="w-8 h-8 text-purple-500" />} color="border-purple-100 hover:border-purple-500" onClick={() => handleStartMission('advanced')} badge="Hard" />
           <DifficultyCard title="Genius" desc="Mastermind Lateral Thinking" icon={<Zap className="w-8 h-8 text-amber-500" />} color="border-amber-100 hover:border-amber-500" onClick={() => handleStartMission('genius')} badge="Extreme" />
           <DifficultyCard title="Olympiad" desc="Competition Standard" icon={<Medal className="w-8 h-8 text-yellow-600" />} color="border-yellow-200 hover:border-yellow-500 bg-yellow-50/30" onClick={() => handleStartMission('olympiad')} badge="Elite" isSpecial />
@@ -131,7 +131,7 @@ const KidsCoach: React.FC<KidsCoachProps> = ({ onXpGain }) => {
       </div>
 
       <div className="space-y-8">
-        <div className={`bg-white p-10 rounded-[3rem] border-4 shadow-2xl relative overflow-hidden min-h-[450px] flex flex-col justify-center transition-colors ${isOlympiad ? 'border-yellow-100' : (feedback === 'incorrect' ? 'border-red-100' : 'border-slate-50')}`}>
+        <div className={`bg-white p-10 rounded-[3rem] border-4 shadow-2xl relative overflow-hidden min-h-[450px] flex flex-col justify-center transition-all ${isOlympiad ? 'border-yellow-100' : (feedback === 'incorrect' ? 'border-red-100 animate-shake' : 'border-slate-50')}`}>
           {loading ? (
             <div className="flex flex-col items-center justify-center gap-6"><RefreshCw className={`w-16 h-16 animate-spin ${isOlympiad ? 'text-yellow-600' : 'text-indigo-600'}`} /><p className="text-slate-900 font-black uppercase tracking-[0.3em] text-[10px]">Assembling Neural Puzzle...</p></div>
           ) : currentPuzzle && (
@@ -210,7 +210,7 @@ const KidsCoach: React.FC<KidsCoachProps> = ({ onXpGain }) => {
               )}
 
               {feedback === 'incorrect' && (
-                <div className="mt-6 p-6 bg-red-50 text-red-900 rounded-[1.5rem] border border-red-100 text-sm font-bold flex items-start gap-4 animate-in shake duration-500">
+                <div className="mt-6 p-6 bg-red-50 text-red-900 rounded-[1.5rem] border border-red-100 text-sm font-bold flex items-start gap-4 animate-in slide-in-from-top-2">
                   <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
                   <p>That's not quite right. Look at the hint or try another option!</p>
                 </div>

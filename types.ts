@@ -12,7 +12,8 @@ export enum ToolType {
   KIDS = 'KIDS',
   DETECTOR = 'DETECTOR',
   INFOGRAPHIC = 'INFOGRAPHIC',
-  CURATOR = 'CURATOR'
+  CURATOR = 'CURATOR',
+  MINDMAP = 'MINDMAP'
 }
 
 export interface CognitiveShift {

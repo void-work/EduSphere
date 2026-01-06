@@ -1,7 +1,6 @@
 
 import React from 'react';
-// Added Gamepad2 to the imports from lucide-react
-import { BookOpen, Briefcase, ClipboardCheck, Mic, PenTool, Zap, Sparkles, TrendingUp, Star, ChevronRight, Brain, Layers, Gamepad2 } from 'lucide-react';
+import { BookOpen, Briefcase, ClipboardCheck, Mic, PenTool, Zap, Sparkles, TrendingUp, Star, ChevronRight, Brain, Layers, Gamepad2, Network } from 'lucide-react';
 import { ToolType, User } from '../types';
 
 interface DashboardProps {
@@ -45,12 +44,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onSelectTool, user }) => {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               <ToolCard icon={<BookOpen className="w-7 h-7" />} title="Textbook AI" desc="Deep Extraction" onClick={() => onSelectTool(ToolType.TEXTBOOK)} accentColor="bg-blue-600" />
+              <ToolCard icon={<Sparkles className="w-7 h-7" />} title="AI Curator" desc="Content Synthesis" onClick={() => onSelectTool(ToolType.CURATOR)} accentColor="bg-amber-500" />
+              <ToolCard icon={<Network className="w-7 h-7" />} title="MindMap Neural" desc="Semantic Hierarchies" onClick={() => onSelectTool(ToolType.MINDMAP)} accentColor="bg-indigo-500" />
               <ToolCard icon={<Layers className="w-7 h-7" />} title="Infographic Pro" desc="Neural Visualization" onClick={() => onSelectTool(ToolType.INFOGRAPHIC)} accentColor="bg-emerald-600" />
               <ToolCard icon={<Mic className="w-7 h-7" />} title="Live Tutor" desc="Audio Mentoring" onClick={() => onSelectTool(ToolType.TUTOR)} accentColor="bg-orange-500" />
               <ToolCard icon={<ClipboardCheck className="w-7 h-7" />} title="Exam Sim" desc="Atomic Testing" onClick={() => onSelectTool(ToolType.EXAM)} accentColor="bg-indigo-600" />
               <ToolCard icon={<Briefcase className="w-7 h-7" />} title="Skill Bridge" desc="Career Mapping" onClick={() => onSelectTool(ToolType.CAREER)} accentColor="bg-emerald-500" />
               <ToolCard icon={<PenTool className="w-7 h-7" />} title="Smart Notes" desc="Cognitive Base" onClick={() => onSelectTool(ToolType.NOTES)} accentColor="bg-violet-600" />
-              <ToolCard icon={<Sparkles className="w-7 h-7" />} title="AI Curator" desc="Content Synthesis" onClick={() => onSelectTool(ToolType.CURATOR)} accentColor="bg-amber-500" />
               <ToolCard icon={<Gamepad2 className="w-7 h-7" />} title="Kids Logic" desc="Neural Growth" onClick={() => onSelectTool(ToolType.KIDS)} accentColor="bg-pink-600" />
             </div>
           </div>
@@ -99,6 +99,7 @@ const getIcon = (type: ToolType) => {
     case ToolType.CURATOR: return <Sparkles className="w-4 h-4" />;
     case ToolType.NOTES: return <PenTool className="w-4 h-4" />;
     case ToolType.KIDS: return <Gamepad2 className="w-4 h-4" />;
+    case ToolType.MINDMAP: return <Network className="w-4 h-4" />;
     default: return <Brain className="w-4 h-4" />;
   }
 }
