@@ -72,8 +72,9 @@ const VoiceTutor: React.FC = () => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
+      // Fix: Updated model name to gemini-2.5-flash-native-audio-preview-12-2025 as per guidelines
       const sessionPromise = ai.live.connect({
-        model: 'gemini-2.5-flash-native-audio-preview-09-2025',
+        model: 'gemini-2.5-flash-native-audio-preview-12-2025',
         callbacks: {
           onopen: () => {
             setStatus('active');
@@ -91,6 +92,7 @@ const VoiceTutor: React.FC = () => {
                 data: encode(new Uint8Array(int16.buffer)),
                 mimeType: 'audio/pcm;rate=16000',
               };
+              // Fix: Solely rely on sessionPromise resolves to send realtime input as per SDK guidelines to avoid race conditions.
               sessionPromise.then(s => s.sendRealtimeInput({ media: pcmBlob }));
             };
             source.connect(scriptProcessor);

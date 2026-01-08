@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EduSphere AI</title>
+  <title>EduSphere AI - Unified Hub</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -96,13 +96,13 @@
 <script type="importmap">
 {
   "imports": {
-    "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/",
     "react": "https://esm.sh/react@^19.2.3",
-    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
-    "vite": "https://esm.sh/vite@^7.3.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
+    "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
+    "vite": "https://esm.sh/vite@^7.3.1",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0"
   }
 }
 </script>
@@ -112,6 +112,286 @@
   <div class="aura aura-1"></div>
   <div class="aura aura-2"></div>
   <div id="root"></div>
-  <script type="module" src="/index.tsx"></script>
+
+  <script type="module">
+    import React, { useState, useEffect, useCallback, useRef } from 'https://esm.sh/react@19.2.3';
+    import ReactDOM from 'https://esm.sh/react-dom@19.2.3/client';
+    import { 
+      BookOpen, Briefcase, ClipboardCheck, Mic, PenTool, Zap, Brain, Gamepad2, Layers, 
+      LogOut, Sparkles, ChevronRight, Network, Star, TrendingUp, CheckCircle, Clock, 
+      History, ChevronLeft, Trash2, AlertTriangle, ArrowRight, Lightbulb, CheckCircle2, 
+      XCircle, RefreshCw, Loader2, Sprout, Rocket, Medal, Info, GraduationCap, Bookmark, Tag, Calendar, Layout, Search, MicOff, Volume2, MousePointer2, Plus, Minus, Maximize
+    } from 'https://esm.sh/lucide-react@0.460.0';
+    import { GoogleGenAI, Type, Modality } from 'https://esm.sh/@google/genai@1.34.0';
+
+    // --- TYPES ---
+    const ToolType = {
+      DASHBOARD: 'DASHBOARD',
+      TEXTBOOK: 'TEXTBOOK',
+      CAREER: 'CAREER',
+      EXAM: 'EXAM',
+      NOTES: 'NOTES',
+      TUTOR: 'TUTOR',
+      VISUAL: 'VISUAL',
+      KIDS: 'KIDS',
+      INFOGRAPHIC: 'INFOGRAPHIC',
+      CURATOR: 'CURATOR',
+      MINDMAP: 'MINDMAP'
+    };
+
+    // --- SERVICES ---
+    const cleanJsonResponse = (text) => text.replace(/```json\n?|```/g, "").trim();
+
+    const fetchAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+    // --- COMPONENTS ---
+
+    const TextbookCompanion = ({ onComplete }) => {
+      const [inputText, setInputText] = useState('');
+      const [className, setClassName] = useState('');
+      const [textbookName, setTextbookName] = useState('');
+      const [loading, setLoading] = useState(false);
+      const [material, setMaterial] = useState(null);
+      const [activeTab, setActiveTab] = useState('flashcards');
+
+      const handleProcess = async () => {
+        setLoading(true);
+        const ai = fetchAI();
+        const response = await ai.models.generateContent({
+          model: 'gemini-3-flash-preview',
+          contents: `Create study materials for ${className} from ${textbookName}. Extract flashcards and a 5-question quiz.\n\n TEXT: ${inputText}`,
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                flashcards: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { question: { type: Type.STRING }, answer: { type: Type.STRING }, source: { type: Type.STRING } } } },
+                quiz: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { question: { type: Type.STRING }, options: { type: Type.ARRAY, items: { type: Type.STRING } }, correctAnswer: { type: Type.STRING }, explanation: { type: Type.STRING } } } }
+              }
+            }
+          }
+        });
+        setMaterial(JSON.parse(cleanJsonResponse(response.text)));
+        setLoading(false);
+        if (onComplete) onComplete(150);
+      };
+
+      return React.createElement('div', { className: "space-y-8 animate-in fade-in" },
+        React.createElement('div', { className: "flex items-center gap-4" },
+          React.createElement('div', { className: "w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center text-white" }, React.createElement(BookOpen)),
+          React.createElement('div', null, 
+            React.createElement('h1', { className: "text-3xl font-black" }, "Textbook AI"),
+            React.createElement('p', { className: "text-slate-500 font-bold" }, "Deep context analysis and atomic fact extraction.")
+          )
+        ),
+        React.createElement('div', { className: "bg-white p-10 rounded-[2.5rem] shadow-2xl space-y-6" },
+          React.createElement('div', { className: "grid grid-cols-2 gap-6" },
+            React.createElement('input', { value: className, onChange: e => setClassName(e.target.value), placeholder: "Class Name", className: "w-full p-4 bg-slate-50 rounded-2xl outline-none" }),
+            React.createElement('input', { value: textbookName, onChange: e => setTextbookName(e.target.value), placeholder: "Textbook Name", className: "w-full p-4 bg-slate-50 rounded-2xl outline-none" })
+          ),
+          React.createElement('textarea', { value: inputText, onChange: e => setInputText(e.target.value), placeholder: "Paste textbook content here...", className: "w-full h-48 p-4 bg-slate-50 rounded-2xl outline-none resize-none" }),
+          React.createElement('button', { onClick: handleProcess, disabled: loading, className: "w-full py-6 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 transition-all" }, 
+            loading ? React.createElement(Loader2, { className: "animate-spin mx-auto" }) : "Generate Study Pack"
+          )
+        )
+      );
+    };
+
+    const KidsCoach = ({ onXpGain }) => {
+      const [gameState, setGameState] = useState('selecting');
+      const [puzzle, setPuzzle] = useState(null);
+      const [loading, setLoading] = useState(false);
+      const [selected, setSelected] = useState(null);
+      const [feedback, setFeedback] = useState(null);
+      const [hintVisible, setHintVisible] = useState(false);
+
+      const fetchPuzzle = async (diff) => {
+        setLoading(true);
+        setSelected(null);
+        setFeedback(null);
+        setHintVisible(false);
+        const ai = fetchAI();
+        const response = await ai.models.generateContent({
+          model: 'gemini-3-flash-preview',
+          contents: `Generate a fun logic puzzle for a child, difficulty: ${diff}.`,
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                question: { type: Type.STRING },
+                options: { type: Type.ARRAY, items: { type: Type.STRING } },
+                answer: { type: Type.STRING },
+                hint: { type: Type.STRING }
+              }
+            }
+          }
+        });
+        setPuzzle(JSON.parse(cleanJsonResponse(response.text)));
+        setLoading(false);
+        setGameState('playing');
+      };
+
+      const handleCheck = () => {
+        if (selected === puzzle.answer) {
+          setFeedback('correct');
+          if (onXpGain) onXpGain(50);
+        } else {
+          setFeedback('incorrect');
+        }
+      };
+
+      if (gameState === 'selecting') {
+        return React.createElement('div', { className: "text-center space-y-12" },
+          React.createElement('h1', { className: "text-4xl font-black" }, "Kids Logic Coach"),
+          React.createElement('div', { className: "grid grid-cols-2 md:grid-cols-3 gap-6" },
+            ['Beginner', 'Intermediate', 'Advanced'].map(d => 
+              React.createElement('button', { key: d, onClick: () => fetchPuzzle(d), className: "p-8 bg-white rounded-[2.5rem] border-2 border-slate-100 hover:border-indigo-500 transition-all font-black" }, d)
+            )
+          )
+        );
+      }
+
+      return React.createElement('div', { className: "max-w-2xl mx-auto space-y-8" },
+        React.createElement('div', { className: `bg-white p-12 rounded-[3rem] border-4 shadow-2xl transition-all ${feedback === 'incorrect' ? 'border-red-100 animate-shake' : 'border-slate-50'}` },
+          loading ? React.createElement(Loader2, { className: "animate-spin mx-auto w-12 h-12 text-indigo-500" }) : 
+          puzzle && React.createElement('div', { className: "space-y-8" },
+            React.createElement('h2', { className: "text-2xl font-black text-slate-800" }, puzzle.question),
+            React.createElement('div', { className: "grid gap-4" },
+              puzzle.options.map(opt => 
+                React.createElement('button', { 
+                  key: opt, 
+                  onClick: () => { setSelected(opt); if(feedback === 'incorrect') setFeedback(null); },
+                  className: `p-6 rounded-2xl border-2 text-left font-bold transition-all ${selected === opt ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-slate-50 border-slate-50 hover:border-indigo-200'}` 
+                }, opt)
+              )
+            ),
+            React.createElement('div', { className: "flex justify-between items-center pt-8 border-t" },
+              React.createElement('button', { onClick: () => setHintVisible(true), className: "text-amber-500 font-black text-xs uppercase" }, "Get Hint"),
+              React.createElement('button', { onClick: feedback === 'correct' ? () => setGameState('selecting') : handleCheck, className: "px-10 py-4 bg-slate-900 text-white rounded-2xl font-black" }, 
+                feedback === 'correct' ? "Next Mission" : "Confirm Choice"
+              )
+            ),
+            hintVisible && React.createElement('div', { className: "p-4 bg-amber-50 rounded-xl text-sm font-bold text-amber-800" }, puzzle.hint),
+            feedback === 'correct' && React.createElement('div', { className: "p-4 bg-emerald-50 text-emerald-800 rounded-xl font-bold" }, "Awesome logic! You got it right!")
+          )
+        )
+      );
+    };
+
+    const Dashboard = ({ onSelectTool, user }) => {
+      const userName = user?.name || 'Explorer';
+      const xp = user?.xp || 0;
+
+      const tools = [
+        { type: ToolType.TEXTBOOK, label: "Textbook AI", icon: React.createElement(BookOpen) },
+        { type: ToolType.CURATOR, label: "AI Curator", icon: React.createElement(Sparkles) },
+        { type: ToolType.MINDMAP, label: "Neural Map", icon: React.createElement(Network) },
+        { type: ToolType.EXAM, label: "Exam Sim", icon: React.createElement(ClipboardCheck) },
+        { type: ToolType.KIDS, label: "Kids Logic", icon: React.createElement(Gamepad2) },
+      ];
+
+      return React.createElement('div', { className: "space-y-12" },
+        React.createElement('header', { className: "flex justify-between items-center" },
+          React.createElement('div', null,
+            React.createElement('h1', { className: "text-5xl font-black" }, `Hi, ${userName.split(' ')[0]}`),
+            React.createElement('p', { className: "text-slate-500 font-bold" }, "Your learning profile is optimized.")
+          ),
+          React.createElement('div', { className: "flex gap-4" },
+            React.createElement('div', { className: "bg-white px-6 py-4 rounded-2xl shadow-xl font-black border border-slate-100" }, `${xp} XP`)
+          )
+        ),
+        React.createElement('div', { className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" },
+          tools.map(tool => 
+            React.createElement('button', { 
+              key: tool.type, 
+              onClick: () => onSelectTool(tool.type),
+              className: "p-10 bg-white rounded-[2.5rem] border border-slate-100 hover:border-indigo-500 transition-all text-left shadow-xl shadow-slate-200/50 flex flex-col justify-between h-64 hover:-translate-y-1 group" 
+            },
+              React.createElement('div', { className: "w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all" }, tool.icon),
+              React.createElement('div', null,
+                React.createElement('h3', { className: "text-xl font-black" }, tool.label),
+                React.createElement('p', { className: "text-[10px] uppercase font-black tracking-widest text-slate-400" }, "Neural Enabled")
+              )
+            )
+          )
+        )
+      );
+    };
+
+    const App = () => {
+      const [activeTool, setActiveTool] = useState(ToolType.DASHBOARD);
+      const [user, setUser] = useState(null);
+      const [loginOpen, setLoginOpen] = useState(false);
+
+      useEffect(() => {
+        const saved = localStorage.getItem('edu_user');
+        if (saved) setUser(JSON.parse(saved));
+      }, []);
+
+      const updateStats = (xpGain) => {
+        setUser(prev => {
+          const next = { ...prev, xp: (prev?.xp || 0) + xpGain };
+          localStorage.setItem('edu_user', JSON.stringify(next));
+          return next;
+        });
+      };
+
+      const handleLogin = (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const u = { name: fd.get('name'), xp: 0, lastActive: new Date().toISOString() };
+        setUser(u);
+        localStorage.setItem('edu_user', JSON.stringify(u));
+        setLoginOpen(false);
+      };
+
+      const renderTool = () => {
+        if (!user && activeTool !== ToolType.DASHBOARD) {
+          return React.createElement('div', { className: "text-center py-24 space-y-6" },
+            React.createElement('h2', { className: "text-3xl font-black" }, "Identification Required"),
+            React.createElement('button', { onClick: () => setLoginOpen(true), className: "px-10 py-4 bg-indigo-600 text-white rounded-2xl font-black" }, "Sign In to Access")
+          );
+        }
+        switch(activeTool) {
+          case ToolType.TEXTBOOK: return React.createElement(TextbookCompanion, { onComplete: updateStats });
+          case ToolType.KIDS: return React.createElement(KidsCoach, { onXpGain: updateStats });
+          default: return React.createElement(Dashboard, { user, onSelectTool: setActiveTool });
+        }
+      };
+
+      return React.createElement('div', { className: "min-h-screen flex" },
+        React.createElement('aside', { className: "w-72 glass border-r border-slate-200 p-8 flex flex-col hidden md:flex" },
+          React.createElement('div', { className: "flex items-center gap-3 mb-12" },
+            React.createElement('div', { className: "w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white" }, React.createElement(Brain, { size: 20 })),
+            React.createElement('span', { className: "text-xl font-black" }, "EduSphere")
+          ),
+          React.createElement('nav', { className: "flex-1 space-y-2" },
+            React.createElement('button', { onClick: () => setActiveTool(ToolType.DASHBOARD), className: `w-full text-left p-4 rounded-xl font-bold transition-all ${activeTool === ToolType.DASHBOARD ? 'bg-white shadow-xl text-indigo-600' : 'text-slate-400'}` }, "Dashboard"),
+            React.createElement('button', { onClick: () => setActiveTool(ToolType.TEXTBOOK), className: `w-full text-left p-4 rounded-xl font-bold transition-all ${activeTool === ToolType.TEXTBOOK ? 'bg-white shadow-xl text-indigo-600' : 'text-slate-400'}` }, "Textbook AI"),
+            React.createElement('button', { onClick: () => setActiveTool(ToolType.KIDS), className: `w-full text-left p-4 rounded-xl font-bold transition-all ${activeTool === ToolType.KIDS ? 'bg-white shadow-xl text-indigo-600' : 'text-slate-400'}` }, "Kids Logic")
+          ),
+          user ? React.createElement('div', { className: "pt-8 border-t flex items-center gap-3" },
+            React.createElement('div', { className: "w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-black" }, user.name.charAt(0)),
+            React.createElement('div', null, React.createElement('p', { className: "font-black text-sm" }, user.name), React.createElement('button', { onClick: () => { setUser(null); localStorage.removeItem('edu_user'); setActiveTool(ToolType.DASHBOARD); }, className: "text-[10px] uppercase font-black text-red-400" }, "Logout"))
+          ) : React.createElement('button', { onClick: () => setLoginOpen(true), className: "w-full py-4 bg-indigo-600 text-white rounded-xl font-black" }, "Sign In")
+        ),
+        React.createElement('main', { className: "flex-1 p-12" }, renderTool()),
+        loginOpen && React.createElement('div', { className: "fixed inset-0 bg-slate-900/40 backdrop-blur-xl flex items-center justify-center z-50 p-4" },
+          React.createElement('div', { className: "bg-white p-12 rounded-[3rem] shadow-2xl w-full max-w-md" },
+            React.createElement('h2', { className: "text-3xl font-black mb-6" }, "Join EduSphere"),
+            React.createElement('form', { onSubmit: handleLogin, className: "space-y-4" },
+              React.createElement('input', { name: "name", required: true, placeholder: "Your Full Name", className: "w-full p-4 bg-slate-50 rounded-xl border border-slate-100 outline-none" }),
+              React.createElement('button', { type: "submit", className: "w-full py-5 bg-indigo-600 text-white rounded-xl font-black" }, "Launch Platform"),
+              React.createElement('button', { type: "button", onClick: () => setLoginOpen(false), className: "w-full text-slate-400 font-bold" }, "Cancel")
+            )
+          )
+        )
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(React.createElement(React.StrictMode, null, React.createElement(App)));
+  </script>
 </body>
 </html>
