@@ -8,6 +8,7 @@ import {
   PenTool, 
   Zap, 
   Brain, 
+  Gamepad2, 
   Layers, 
   User as UserIcon, 
   LogOut,
@@ -15,14 +16,7 @@ import {
   ChevronRight,
   Network,
   Menu,
-  X,
-  AlertTriangle,
-  RefreshCw,
-  Cpu,
-  Terminal,
-  Skull,
-  // Added Gamepad2 to fix the 'Cannot find name' error
-  Gamepad2
+  X
 } from 'lucide-react';
 import { ToolType, User, CognitiveShift } from './types';
 import TextbookCompanion from './components/TextbookCompanion';
@@ -42,46 +36,54 @@ const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isCrashed, setIsCrashed] = useState(false);
-  const [crashPhase, setCrashPhase] = useState(0);
 
-  // Handle User Persistence
+  // Load user from persistent storage
   useEffect(() => {
     const savedUser = localStorage.getItem('edu_user');
     if (savedUser) {
       const parsedUser: User = JSON.parse(savedUser);
-      setUser(parsedUser);
+      
+      // Update streak logic
+      const lastActiveDate = new Date(parsedUser.lastActive);
+      const today = new Date();
+      const diffTime = Math.abs(today.getTime() - lastActiveDate.getTime());
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      
+      let updatedStreak = parsedUser.streak;
+      if (diffDays === 1) {
+        updatedStreak += 1;
+      } else if (diffDays > 1) {
+        updatedStreak = 1;
+      }
+      
+      const updatedUser = { 
+        ...parsedUser, 
+        streak: updatedStreak, 
+        lastActive: today.toISOString() 
+      };
+      
+      setUser(updatedUser);
+      localStorage.setItem('edu_user', JSON.stringify(updatedUser));
     }
   }, []);
-
-  const triggerCrash = () => {
-    setIsCrashed(true);
-    // Simulate phases of a system failure
-    setTimeout(() => setCrashPhase(1), 100);
-    setTimeout(() => setCrashPhase(2), 2000);
-    setTimeout(() => setCrashPhase(3), 4000);
-  };
-
-  const reboot = () => {
-    setIsCrashed(false);
-    setCrashPhase(0);
-    setActiveTool(ToolType.DASHBOARD);
-  };
 
   const updateStats = useCallback((xpGain: number, activityLabel: string, tool: ToolType) => {
     setUser(prev => {
       if (!prev) return null;
+      
       const newShift: CognitiveShift = {
         label: activityLabel,
         xp: `+${xpGain} XP`,
         date: 'Just now',
         type: tool
       };
+      
       const updatedUser = {
         ...prev,
         xp: prev.xp + xpGain,
         cognitiveShifts: [newShift, ...prev.cognitiveShifts].slice(0, 10)
       };
+      
       localStorage.setItem('edu_user', JSON.stringify(updatedUser));
       return updatedUser;
     });
@@ -90,109 +92,71 @@ const App: React.FC = () => {
   const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const fullName = `${formData.get('firstName')} ${formData.get('surname')}`.trim() || 'Alex Learner';
-    const newUser: User = { 
-      id: Date.now().toString(), 
-      name: fullName, 
-      email: formData.get('email') as string || 'alex@example.com', 
-      isLoggedIn: true,
-      xp: 0,
-      streak: 1,
-      lastActive: new Date().toISOString(),
-      cognitiveShifts: []
-    };
-    setUser(newUser);
-    localStorage.setItem('edu_user', JSON.stringify(newUser));
+    const firstName = formData.get('firstName') as string;
+    const surname = formData.get('surname') as string;
+    const email = formData.get('email') as string;
+    
+    const fullName = `${firstName} ${surname}`.trim() || 'Alex Learner';
+    
+    // Check if user already exists in storage to preserve stats
+    const existing = localStorage.getItem('edu_user');
+    let baseUser: User;
+    
+    if (existing) {
+      baseUser = JSON.parse(existing);
+    } else {
+      baseUser = { 
+        id: Date.now().toString(), 
+        name: fullName, 
+        email: email || 'alex@example.com', 
+        isLoggedIn: true,
+        xp: 0,
+        streak: 1,
+        lastActive: new Date().toISOString(),
+        cognitiveShifts: []
+      };
+    }
+    
+    const finalUser = { ...baseUser, isLoggedIn: true, name: fullName, email: email };
+    setUser(finalUser);
+    localStorage.setItem('edu_user', JSON.stringify(finalUser));
     setIsLoginModalOpen(false);
   };
 
   const handleLogout = () => {
+    if (user) {
+      const loggedOutUser = { ...user, isLoggedIn: false };
+      localStorage.setItem('edu_user', JSON.stringify(loggedOutUser));
+    }
     setUser(null);
-    localStorage.removeItem('edu_user');
     setActiveTool(ToolType.DASHBOARD);
     setIsMobileMenuOpen(false);
   };
 
-  if (isCrashed) {
-    return (
-      <div className={`min-h-screen w-full flex items-center justify-center p-8 bg-black text-emerald-500 overflow-hidden relative crt-lines ${crashPhase >= 2 ? 'animate-crash-shake' : ''}`}>
-        <div className="max-w-4xl w-full terminal-font z-50 space-y-8">
-          <div className="flex items-center gap-4 mb-12">
-            <Cpu className="w-12 h-12 animate-pulse text-red-500" />
-            <h1 className="text-4xl font-bold tracking-tighter text-red-500">SYSTEM KERNEL PANIC</h1>
-          </div>
-          
-          <div className="space-y-2 text-sm opacity-80">
-            <p>[ 0.000000] Initializing EduSphere OS v2.3.chaos...</p>
-            <p>[ 0.045231] CPU0: Intel(R) Core(TM) i9-AI-NODE</p>
-            <p>[ 1.129842] FATAL ERROR: Cognitive recursive loop detected in MindMapNeural module.</p>
-            <p>[ 1.129843] Overflow in partition: /home/learning/data/infinity</p>
-            {crashPhase >= 1 && (
-              <>
-                <p className="text-red-500 font-bold">[ 2.551229] *** STACK TRACE BEGINS ***</p>
-                <p className="pl-4">at edu.core.intelligence.NeuralNet.process(NeuralNet.ts:404)</p>
-                <p className="pl-4">at edu.ui.App.triggerCrash(App.tsx:55)</p>
-                <p className="pl-4">at user.input.Destruction.click(Dashboard.tsx:21)</p>
-                <p className="text-red-500 font-bold">[ 2.551230] *** MEMORY CORRUPTION DETECTED ***</p>
-              </>
-            )}
-            {crashPhase >= 2 && (
-              <div className="grid grid-cols-4 gap-4 py-8 animate-glitch">
-                <Skull className="w-12 h-12 text-red-500" />
-                <AlertTriangle className="w-12 h-12 text-amber-500" />
-                <Skull className="w-12 h-12 text-red-500" />
-                <Terminal className="w-12 h-12 text-white" />
-              </div>
-            )}
-            {crashPhase >= 3 && (
-              <div className="mt-12 p-8 border-2 border-red-500 bg-red-950/20 rounded-2xl animate-pulse">
-                <h2 className="text-2xl font-black mb-4">CRITICAL FAILURE</h2>
-                <p className="mb-8">The AI engine has reached critical mass. Reality synthesis is failing. Please perform a manual reboot to restore the learning environment.</p>
-                <button 
-                  onClick={reboot}
-                  className="px-12 py-5 bg-red-600 text-white rounded-xl font-black uppercase tracking-[0.3em] hover:bg-white hover:text-red-600 transition-all flex items-center justify-center gap-4 group"
-                >
-                  <RefreshCw className="w-6 h-6 group-hover:rotate-180 transition-transform duration-500" />
-                  REBOOT CORE
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-        
-        {/* Background glitch debris */}
-        <div className="absolute inset-0 pointer-events-none opacity-20">
-          {[...Array(20)].map((_, i) => (
-            <div 
-              key={i} 
-              className="absolute bg-white/10" 
-              style={{
-                width: Math.random() * 200 + 'px',
-                height: '1px',
-                top: Math.random() * 100 + '%',
-                left: Math.random() * 100 + '%',
-                animation: `glitch ${Math.random() + 0.1}s infinite`
-              }}
-            />
-          ))}
-        </div>
-      </div>
-    );
-  }
+  const selectTool = (tool: ToolType) => {
+    setActiveTool(tool);
+    setIsMobileMenuOpen(false);
+  };
 
   const renderTool = () => {
     if (!user && activeTool !== ToolType.DASHBOARD) {
       return (
-        <div className="flex flex-col items-center justify-center h-full text-center px-6 py-12 bg-white/80 backdrop-blur-xl rounded-[3rem] shadow-2xl border border-white/40 animate-in zoom-in-95">
-          <div className="w-24 h-24 bg-indigo-600 rounded-[2rem] flex items-center justify-center mb-8 shadow-2xl shadow-indigo-200/50">
-            <Brain className="w-12 h-12 text-white" />
+        <div className="flex flex-col items-center justify-center h-full text-center px-6 py-12 md:p-12 bg-white/80 backdrop-blur-xl rounded-[2rem] md:rounded-[3rem] shadow-2xl border border-white/40 animate-in zoom-in-95 duration-500">
+          <div className="w-20 h-20 md:w-24 md:h-24 bg-indigo-600 rounded-[1.5rem] md:rounded-[2rem] flex items-center justify-center mb-8 shadow-2xl shadow-indigo-200/50">
+            <Brain className="w-10 h-10 md:w-12 md:h-12 text-white" />
           </div>
-          <h2 className="text-3xl font-black mb-4 text-slate-900 tracking-tight">Identify Yourself</h2>
-          <p className="text-slate-500 max-w-sm mb-8 font-medium">Sign in to access advanced AI tutoring features.</p>
-          <button onClick={() => setIsLoginModalOpen(true)} className="px-10 py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 transition-all flex items-center gap-3">Sign In Now <ChevronRight className="w-5 h-5" /></button>
+          <h2 className="text-2xl md:text-3xl font-black mb-4 text-slate-900 tracking-tight">Identify Yourself</h2>
+          <p className="text-slate-500 max-w-sm mb-8 font-medium leading-relaxed">Sign in with your name and surname to access advanced AI tutoring features.</p>
+          <button 
+            onClick={() => setIsLoginModalOpen(true)}
+            className="w-full md:w-auto px-10 py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3"
+          >
+            Sign In Now <ChevronRight className="w-5 h-5" />
+          </button>
         </div>
       );
     }
+
     switch (activeTool) {
       case ToolType.TEXTBOOK: return <TextbookCompanion onComplete={(xp) => updateStats(xp, "Textbook Synthesis", ToolType.TEXTBOOK)} />;
       case ToolType.CAREER: return <SkillBridge />;
@@ -202,4 +166,155 @@ const App: React.FC = () => {
       case ToolType.KIDS: return <KidsCoach onXpGain={(xp) => updateStats(xp, "Logic Mission", ToolType.KIDS)} />;
       case ToolType.NOTES: return <Notetaker onEnhance={(xp) => updateStats(xp, "Smart Note Enhancement", ToolType.NOTES)} />;
       case ToolType.INFOGRAPHIC: return <InfographicCreator onComplete={(xp) => updateStats(xp, "Infographic Synthesis", ToolType.INFOGRAPHIC)} />;
-      case ToolType.CURATOR: return <Curator onComplete={(xp) => updateStats(xp, "Roadmap Generation", ToolType.CUR
+      case ToolType.CURATOR: return <Curator onComplete={(xp) => updateStats(xp, "Roadmap Generation", ToolType.CURATOR)} />;
+      case ToolType.MINDMAP: return <MindMapCreator />;
+      default: return <Dashboard onSelectTool={selectTool} user={user} />;
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col md:flex-row text-slate-900 selection:bg-indigo-500 selection:text-white">
+      {/* Mobile Top Header */}
+      <div className="md:hidden flex items-center justify-between p-5 bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-indigo-100 text-white">
+            <Brain className="w-6 h-6" />
+          </div>
+          <span className="text-xl font-black tracking-tighter text-slate-900">EduSphere</span>
+        </div>
+        <button 
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="p-2 text-slate-600 hover:text-indigo-600 transition-colors"
+        >
+          {isMobileMenuOpen ? <X className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
+        </button>
+      </div>
+
+      {/* Sidebar Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 md:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside className={`
+        fixed inset-y-0 left-0 w-72 glass border-r border-slate-200/40 flex flex-col z-[45] transition-transform duration-300 transform
+        md:translate-x-0 md:static md:h-screen md:z-30
+        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+      `}>
+        <div className="p-8 hidden md:flex items-center gap-4 mb-4">
+          <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-xl shadow-indigo-100 text-white">
+            <Brain className="w-7 h-7" />
+          </div>
+          <span className="text-2xl font-black tracking-tighter text-slate-900">EduSphere</span>
+        </div>
+
+        <nav className="flex-1 p-6 space-y-2 overflow-y-auto custom-scrollbar">
+          <NavItem icon={<Sparkles className="w-5 h-5" />} label="Dashboard" active={activeTool === ToolType.DASHBOARD} onClick={() => selectTool(ToolType.DASHBOARD)} />
+          <div className="mt-8 mb-4 px-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Curriculum</div>
+          <NavItem icon={<BookOpen className="w-5 h-5" />} label="Textbook AI" active={activeTool === ToolType.TEXTBOOK} onClick={() => selectTool(ToolType.TEXTBOOK)} />
+          <NavItem icon={<Sparkles className="w-5 h-5 text-indigo-400" />} label="AI Curator" active={activeTool === ToolType.CURATOR} onClick={() => selectTool(ToolType.CURATOR)} />
+          <NavItem icon={<Network className="w-5 h-5" />} label="MindMap Neural" active={activeTool === ToolType.MINDMAP} onClick={() => selectTool(ToolType.MINDMAP)} />
+          <NavItem icon={<Layers className="w-5 h-5" />} label="Infographic Pro" active={activeTool === ToolType.INFOGRAPHIC} onClick={() => selectTool(ToolType.INFOGRAPHIC)} />
+          <NavItem icon={<Briefcase className="w-5 h-5" />} label="Career Bridge" active={activeTool === ToolType.CAREER} onClick={() => selectTool(ToolType.CAREER)} />
+          <NavItem icon={<ClipboardCheck className="w-5 h-5" />} label="Exam Sim" active={activeTool === ToolType.EXAM} onClick={() => selectTool(ToolType.EXAM)} />
+          <NavItem icon={<PenTool className="w-5 h-5" />} label="Smart Notes" active={activeTool === ToolType.NOTES} onClick={() => selectTool(ToolType.NOTES)} />
+          <div className="mt-8 mb-4 px-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">AI Experiments</div>
+          <NavItem icon={<Mic className="w-5 h-5" />} label="Live Tutor" active={activeTool === ToolType.TUTOR} onClick={() => selectTool(ToolType.TUTOR)} />
+          <NavItem icon={<Zap className="w-5 h-5" />} label="Concept Sketch" active={activeTool === ToolType.VISUAL} onClick={() => selectTool(ToolType.VISUAL)} />
+          <NavItem icon={<Gamepad2 className="w-5 h-5" />} label="Kids Logic" active={activeTool === ToolType.KIDS} onClick={() => selectTool(ToolType.KIDS)} />
+        </nav>
+
+        <div className="p-6">
+          {user ? (
+            <div className="flex items-center justify-between bg-slate-100/50 p-4 rounded-3xl border border-slate-200/50 shadow-sm">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center shrink-0">
+                  <span className="text-white text-xs font-black">{user.name.charAt(0)}</span>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-black truncate text-slate-900">{user.name}</p>
+                  <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Lvl {Math.floor(user.xp / 1000) + 1}</p>
+                </div>
+              </div>
+              <button onClick={handleLogout} className="p-2 text-slate-400 hover:text-red-500 transition-colors" title="Logout"><LogOut className="w-4 h-4" /></button>
+            </div>
+          ) : (
+            <button onClick={() => { setIsLoginModalOpen(true); setIsMobileMenuOpen(false); }} className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 flex items-center justify-center gap-2 group">
+              Sign In <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </button>
+          )}
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 overflow-y-auto p-4 md:p-12 transition-all">
+        <div className="max-w-6xl mx-auto h-full">
+          {renderTool()}
+        </div>
+      </main>
+
+      {/* Login Modal */}
+      {isLoginModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xl flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300">
+          <div className="bg-white rounded-[2rem] md:rounded-[3rem] shadow-2xl w-full max-w-md p-8 md:p-12 animate-in zoom-in-95 duration-300 border border-white max-h-[90vh] overflow-y-auto">
+            <div className="w-16 h-16 md:w-20 md:h-20 bg-indigo-600 rounded-2xl md:rounded-3xl flex items-center justify-center mb-8 shadow-2xl shadow-indigo-100 text-white">
+               <Brain className="w-8 h-8 md:w-10 md:h-10" />
+            </div>
+            <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-3 text-slate-900">Welcome Back</h2>
+            <p className="text-slate-500 mb-8 md:mb-10 font-bold">Your personalized AI tutor is ready when you are.</p>
+            <form onSubmit={handleLogin} className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">First Name</label>
+                  <input name="firstName" type="text" required className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-bold" placeholder="Jane" />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Surname</label>
+                  <input name="surname" type="text" required className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-bold" placeholder="Doe" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Email Address</label>
+                <input name="email" type="email" required className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-bold" placeholder="name@example.com" />
+              </div>
+              <div className="space-y-2">
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Password</label>
+                <input name="password" type="password" required className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-bold" placeholder="••••••••" />
+              </div>
+              <button type="submit" className="w-full py-6 bg-indigo-600 text-white rounded-[1.5rem] font-black text-sm uppercase tracking-[0.2em] hover:bg-indigo-700 transition-all shadow-2xl shadow-indigo-100 active:scale-95 flex items-center justify-center gap-3">
+                Launch Experience <Sparkles className="w-5 h-5 text-amber-400" />
+              </button>
+            </form>
+            <button onClick={() => setIsLoginModalOpen(false)} className="w-full mt-6 py-2 text-slate-400 hover:text-slate-900 transition-colors text-xs font-black uppercase tracking-widest">Cancel Entry</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+interface NavItemProps {
+  icon: React.ReactNode;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}
+
+const NavItem: React.FC<NavItemProps> = ({ icon, label, active, onClick }) => (
+  <button 
+    onClick={onClick}
+    className={`w-full flex items-center gap-4 px-5 py-4 rounded-[1.25rem] transition-all duration-300 group ${
+      active 
+        ? 'bg-white text-indigo-600 shadow-xl shadow-slate-200/50 scale-[1.02] md:scale-105 border border-slate-100' 
+        : 'text-slate-400 hover:bg-white/50 hover:text-slate-900'
+    }`}
+  >
+    <span className={`${active ? 'text-indigo-600' : 'text-slate-300 group-hover:text-indigo-500 transition-colors'}`}>{icon}</span>
+    <span className="text-sm font-black tracking-tight">{label}</span>
+  </button>
+);
+
+export default App;
