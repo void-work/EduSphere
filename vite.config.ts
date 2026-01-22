@@ -1,4 +1,3 @@
-
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
@@ -11,12 +10,16 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
-    // Ensures all assets are bundled correctly for production
     minify: 'terser',
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'lucide-react', '@google/genai'],
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react')) return 'vendor-react';
+            if (id.includes('@google/genai')) return 'vendor-genai';
+            if (id.includes('lucide-react')) return 'vendor-icons';
+            return 'vendor';
+          }
         },
       },
     },
