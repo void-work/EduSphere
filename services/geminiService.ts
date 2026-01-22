@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { Flashcard, QuizQuestion, CareerPlan, CuratedPath, MindMapNode } from "../types";
 
@@ -78,7 +77,8 @@ export const generateStudyMaterial = async (
     }
   });
 
-  return JSON.parse(cleanJsonResponse(response.text) || '{"flashcards":[], "quiz":[]}');
+  const responseText = response.text || "";
+  return JSON.parse(cleanJsonResponse(responseText) || '{"flashcards":[], "quiz":[]}');
 };
 
 export const enhanceNote = async (content: string): Promise<NoteEnhancement> => {
@@ -99,7 +99,8 @@ export const enhanceNote = async (content: string): Promise<NoteEnhancement> => 
       }
     }
   });
-  return JSON.parse(cleanJsonResponse(response.text) || "{}") as NoteEnhancement;
+  const responseText = response.text || "";
+  return JSON.parse(cleanJsonResponse(responseText) || "{\"summary\":\"\",\"keyConcepts\":[],\"suggestedDifficulty\":1}") as NoteEnhancement;
 };
 
 export const mapSkillsToCareer = async (skills: string[]): Promise<CareerPlan[]> => {
@@ -125,7 +126,8 @@ export const mapSkillsToCareer = async (skills: string[]): Promise<CareerPlan[]>
     }
   });
 
-  return JSON.parse(cleanJsonResponse(response.text) || "[]");
+  const responseText = response.text || "";
+  return JSON.parse(cleanJsonResponse(responseText) || "[]");
 };
 
 export const generateLogicPuzzle = async (level: number): Promise<LogicPuzzle> => {
@@ -153,7 +155,8 @@ export const generateLogicPuzzle = async (level: number): Promise<LogicPuzzle> =
       }
     }
   });
-  return JSON.parse(cleanJsonResponse(response.text) || "{}") as LogicPuzzle;
+  const responseText = response.text || "";
+  return JSON.parse(cleanJsonResponse(responseText) || "{\"type\":\"\",\"question\":\"\",\"options\":[],\"answer\":\"\",\"hint\":\"\"}") as LogicPuzzle;
 };
 
 export const generateSketch = async (concept: string): Promise<string> => {
@@ -180,22 +183,6 @@ export const generateInfographic = async (topic: string, content: string): Promi
   return base64 ? `data:image/png;base64,${base64}` : "";
 };
 
-export const generateAdImage = async (prompt: string): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash-image',
-    contents: {
-      parts: [{ text: `Hyper-realistic educational promotional image for: ${prompt}. Elite commercial aesthetic.` }]
-    }
-  });
-  const parts = response.candidates?.[0]?.content?.parts ?? [];
-  const base64 = parts.find(p => p.inlineData)?.inlineData?.data;
-  return base64 ? `data:image/png;base64,${base64}` : "";
-};
-
-/**
- * AI Curator: Generates a structured learning path for any given topic.
- */
 export const generateCuratedPath = async (topic: string): Promise<CuratedPath> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
@@ -229,12 +216,10 @@ export const generateCuratedPath = async (topic: string): Promise<CuratedPath> =
     }
   });
 
-  return JSON.parse(cleanJsonResponse(response.text) || "{}") as CuratedPath;
+  const responseText = response.text || "";
+  return JSON.parse(cleanJsonResponse(responseText) || "{\"topic\":\"\",\"description\":\"\",\"modules\":[],\"masteryOutcome\":\"\"}") as CuratedPath;
 };
 
-/**
- * AI Mind Mapper: Decomposes a topic into a hierarchical semantic map.
- */
 export const generateMindMapData = async (topic: string, content: string): Promise<MindMapNode> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
@@ -283,5 +268,6 @@ export const generateMindMapData = async (topic: string, content: string): Promi
     }
   });
 
-  return JSON.parse(cleanJsonResponse(response.text) || "{}") as MindMapNode;
+  const responseText = response.text || "";
+  return JSON.parse(cleanJsonResponse(responseText) || "{\"id\":\"root\",\"label\":\"\"}") as MindMapNode;
 };

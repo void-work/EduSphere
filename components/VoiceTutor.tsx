@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Mic, MicOff, Volume2, Brain, AlertCircle, Loader2, Sparkles } from 'lucide-react';
 import { GoogleGenAI, Modality, LiveServerMessage } from '@google/genai';
@@ -26,7 +25,6 @@ const VoiceTutor: React.FC = () => {
     transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [transcript]);
 
-  // Manual Base64 Implementation as per requirements
   const decode = (base64: string) => {
     const binaryString = atob(base64);
     const len = binaryString.length;
@@ -97,23 +95,23 @@ const VoiceTutor: React.FC = () => {
             scriptProcessor.connect(inputCtx.destination);
           },
           onmessage: async (msg: LiveServerMessage) => {
-            // Handle Audio Output
             const parts = msg.serverContent?.modelTurn?.parts ?? [];
             const audioData = parts[0]?.inlineData?.data;
             if (audioData) {
-              const ctx = audioContextRef.current!;
-              nextStartTimeRef.current = Math.max(nextStartTimeRef.current, ctx.currentTime);
-              const buffer = await decodeAudioData(decode(audioData), ctx, 24000, 1);
-              const source = ctx.createBufferSource();
-              source.buffer = buffer;
-              source.connect(ctx.destination);
-              source.start(nextStartTimeRef.current);
-              nextStartTimeRef.current += buffer.duration;
-              sourcesRef.current.add(source);
-              source.onended = () => sourcesRef.current.delete(source);
+              const ctx = audioContextRef.current;
+              if (ctx) {
+                nextStartTimeRef.current = Math.max(nextStartTimeRef.current, ctx.currentTime);
+                const buffer = await decodeAudioData(decode(audioData), ctx, 24000, 1);
+                const source = ctx.createBufferSource();
+                source.buffer = buffer;
+                source.connect(ctx.destination);
+                source.start(nextStartTimeRef.current);
+                nextStartTimeRef.current += buffer.duration;
+                sourcesRef.current.add(source);
+                source.onended = () => sourcesRef.current.delete(source);
+              }
             }
 
-            // Handle Transcription
             if (msg.serverContent?.outputTranscription) {
               const text = msg.serverContent.outputTranscription.text ?? "";
               setTranscript(prev => {
@@ -128,7 +126,9 @@ const VoiceTutor: React.FC = () => {
             }
 
             if (msg.serverContent?.interrupted) {
-              sourcesRef.current.forEach(s => s.stop());
+              sourcesRef.current.forEach(s => {
+                try { s.stop(); } catch(e) {}
+              });
               sourcesRef.current.clear();
               nextStartTimeRef.current = 0;
             }
