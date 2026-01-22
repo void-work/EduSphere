@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   BookOpen, 
@@ -16,7 +15,6 @@ import {
   Menu,
   X,
   User as UserIcon,
-  // Fix: Added missing Gamepad2 import from lucide-react
   Gamepad2
 } from 'lucide-react';
 import { ToolType, User, CognitiveShift } from './types';
@@ -150,13 +148,13 @@ const App: React.FC = () => {
       {/* Mobile Nav */}
       <div className="md:hidden flex items-center justify-between p-5 bg-white border-b border-slate-200 sticky top-0 z-50">
         <div className="flex items-center gap-3" onClick={() => setActiveTool(ToolType.DASHBOARD)}>
-          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white">
-            <Brain className="w-6 h-6" />
+          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
+            <Brain className="w-5 h-5" />
           </div>
-          <span className="text-xl font-black tracking-tighter">EduSphere</span>
+          <span className="text-lg font-black tracking-tighter">EduSphere</span>
         </div>
         <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2">
-          {isMobileMenuOpen ? <X className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
+          {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </div>
 
@@ -173,28 +171,29 @@ const App: React.FC = () => {
           <span className="text-2xl font-black tracking-tighter">EduSphere</span>
         </div>
 
-        <nav className="flex-1 space-y-2 overflow-y-auto custom-scrollbar">
-          <NavItem icon={<Sparkles className="w-5 h-5" />} label="Dashboard" active={activeTool === ToolType.DASHBOARD} onClick={() => selectTool(ToolType.DASHBOARD)} />
+        <nav className="flex-1 space-y-1.5 overflow-y-auto custom-scrollbar">
+          <NavItem icon={<Sparkles className="w-4 h-4" />} label="Dashboard" active={activeTool === ToolType.DASHBOARD} onClick={() => selectTool(ToolType.DASHBOARD)} />
           <div className="mt-8 mb-4 px-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Core Modules</div>
-          <NavItem icon={<BookOpen className="w-5 h-5" />} label="Textbook AI" active={activeTool === ToolType.TEXTBOOK} onClick={() => selectTool(ToolType.TEXTBOOK)} />
-          <NavItem icon={<Sparkles className="w-5 h-5" />} label="AI Curator" active={activeTool === ToolType.CURATOR} onClick={() => selectTool(ToolType.CURATOR)} />
-          <NavItem icon={<Network className="w-5 h-5" />} label="Neural Map" active={activeTool === ToolType.MINDMAP} onClick={() => selectTool(ToolType.MINDMAP)} />
-          <NavItem icon={<Layers className="w-5 h-5" />} label="Infographic Pro" active={activeTool === ToolType.INFOGRAPHIC} onClick={() => selectTool(ToolType.INFOGRAPHIC)} />
-          <NavItem icon={<ClipboardCheck className="w-5 h-5" />} label="Exam Sim" active={activeTool === ToolType.EXAM} onClick={() => selectTool(ToolType.EXAM)} />
-          <NavItem icon={<PenTool className="w-5 h-5" />} label="Smart Notes" active={activeTool === ToolType.NOTES} onClick={() => selectTool(ToolType.NOTES)} />
+          <NavItem icon={<BookOpen className="w-4 h-4" />} label="Textbook AI" active={activeTool === ToolType.TEXTBOOK} onClick={() => selectTool(ToolType.TEXTBOOK)} />
+          <NavItem icon={<Sparkles className="w-4 h-4" />} label="AI Curator" active={activeTool === ToolType.CURATOR} onClick={() => selectTool(ToolType.CURATOR)} />
+          <NavItem icon={<Network className="w-4 h-4" />} label="Neural Map" active={activeTool === ToolType.MINDMAP} onClick={() => selectTool(ToolType.MINDMAP)} />
+          <NavItem icon={<Layers className="w-4 h-4" />} label="Infographic Pro" active={activeTool === ToolType.INFOGRAPHIC} onClick={() => selectTool(ToolType.INFOGRAPHIC)} />
+          <NavItem icon={<ClipboardCheck className="w-4 h-4" />} label="Exam Sim" active={activeTool === ToolType.EXAM} onClick={() => selectTool(ToolType.EXAM)} />
+          <NavItem icon={<PenTool className="w-4 h-4" />} label="Smart Notes" active={activeTool === ToolType.NOTES} onClick={() => selectTool(ToolType.NOTES)} />
           <div className="mt-8 mb-4 px-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Experiments</div>
-          <NavItem icon={<Mic className="w-5 h-5" />} label="Live Tutor" active={activeTool === ToolType.TUTOR} onClick={() => selectTool(ToolType.TUTOR)} />
-          <NavItem icon={<Gamepad2 className="w-5 h-5" />} label="Kids Logic" active={activeTool === ToolType.KIDS} onClick={() => selectTool(ToolType.KIDS)} />
+          <NavItem icon={<Mic className="w-4 h-4" />} label="Live Tutor" active={activeTool === ToolType.TUTOR} onClick={() => selectTool(ToolType.TUTOR)} />
+          <NavItem icon={<Gamepad2 className="w-4 h-4" />} label="Kids Logic" active={activeTool === ToolType.KIDS} onClick={() => selectTool(ToolType.KIDS)} />
+          <NavItem icon={<Briefcase className="w-4 h-4" />} label="Skill Bridge" active={activeTool === ToolType.CAREER} onClick={() => selectTool(ToolType.CAREER)} />
         </nav>
 
         <div className="mt-8">
           {user ? (
-            <div className="p-4 bg-slate-100 rounded-3xl flex items-center justify-between gap-3">
+            <div className="p-4 bg-slate-100 rounded-2xl flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 overflow-hidden">
-                <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-black shrink-0">{user.name.charAt(0)}</div>
+                <div className="w-9 h-9 bg-indigo-600 rounded-full flex items-center justify-center text-white font-black shrink-0 text-xs">{user.name.charAt(0)}</div>
                 <div className="min-w-0">
-                  <p className="text-sm font-black truncate">{user.name}</p>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{user.xp} XP</p>
+                  <p className="text-xs font-black truncate">{user.name}</p>
+                  <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">{user.xp} XP</p>
                 </div>
               </div>
               <button onClick={handleLogout} className="text-slate-400 hover:text-red-500 transition-colors shrink-0">
@@ -202,7 +201,7 @@ const App: React.FC = () => {
               </button>
             </div>
           ) : (
-            <button onClick={() => setIsLoginModalOpen(true)} className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100">
+            <button onClick={() => setIsLoginModalOpen(true)} className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl">
               Sign In
             </button>
           )}
@@ -210,7 +209,7 @@ const App: React.FC = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-6 md:p-12 overflow-y-auto custom-scrollbar">
+      <main className="flex-1 p-6 md:p-12 overflow-y-auto custom-scrollbar h-screen">
         <div className="max-w-6xl mx-auto">
           {renderTool()}
         </div>
@@ -250,12 +249,12 @@ interface NavItemProps {
 const NavItem: React.FC<NavItemProps> = ({ icon, label, active, onClick }) => (
   <button 
     onClick={onClick}
-    className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 ${
-      active ? 'bg-white shadow-xl text-indigo-600 scale-[1.05] border border-slate-100' : 'text-slate-400 hover:bg-white/50 hover:text-slate-900'
+    className={`w-full flex items-center gap-4 px-5 py-3.5 rounded-xl transition-all duration-300 ${
+      active ? 'bg-white shadow-lg text-indigo-600 border border-slate-100' : 'text-slate-400 hover:bg-white/50 hover:text-slate-900'
     }`}
   >
     <span className={active ? 'text-indigo-600' : 'text-slate-300'}>{icon}</span>
-    <span className="text-sm font-black tracking-tight">{label}</span>
+    <span className="text-xs font-black tracking-tight">{label}</span>
   </button>
 );
 
