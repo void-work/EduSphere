@@ -72,7 +72,6 @@ const VoiceTutor: React.FC = () => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
-      // Fix: Updated model name to gemini-2.5-flash-native-audio-preview-12-2025 as per guidelines
       const sessionPromise = ai.live.connect({
         model: 'gemini-2.5-flash-native-audio-preview-12-2025',
         callbacks: {
@@ -92,7 +91,6 @@ const VoiceTutor: React.FC = () => {
                 data: encode(new Uint8Array(int16.buffer)),
                 mimeType: 'audio/pcm;rate=16000',
               };
-              // Fix: Solely rely on sessionPromise resolves to send realtime input as per SDK guidelines to avoid race conditions.
               sessionPromise.then(s => s.sendRealtimeInput({ media: pcmBlob }));
             };
             source.connect(scriptProcessor);
@@ -100,7 +98,8 @@ const VoiceTutor: React.FC = () => {
           },
           onmessage: async (msg: LiveServerMessage) => {
             // Handle Audio Output
-            const audioData = msg.serverContent?.modelTurn?.parts[0]?.inlineData?.data;
+            const parts = msg.serverContent?.modelTurn?.parts ?? [];
+            const audioData = parts[0]?.inlineData?.data;
             if (audioData) {
               const ctx = audioContextRef.current!;
               nextStartTimeRef.current = Math.max(nextStartTimeRef.current, ctx.currentTime);
@@ -114,9 +113,9 @@ const VoiceTutor: React.FC = () => {
               source.onended = () => sourcesRef.current.delete(source);
             }
 
-            // Handle Transcription (Enabling the tutor to "Speak" English visually)
+            // Handle Transcription
             if (msg.serverContent?.outputTranscription) {
-              const text = msg.serverContent.outputTranscription.text;
+              const text = msg.serverContent.outputTranscription.text ?? "";
               setTranscript(prev => {
                 const lastItem = prev[prev.length - 1];
                 if (lastItem && lastItem.role === 'ai') {
@@ -142,7 +141,7 @@ const VoiceTutor: React.FC = () => {
         },
         config: {
           responseModalities: [Modality.AUDIO],
-          outputAudioTranscription: {}, // Enable seeing what the AI says
+          outputAudioTranscription: {}, 
           speechConfig: { 
             voiceConfig: { 
               prebuiltVoiceConfig: { voiceName: 'Zephyr' } 

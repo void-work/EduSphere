@@ -19,7 +19,8 @@ export interface NoteEnhancement {
 /**
  * Utility to clean AI response text by removing potential markdown formatting
  */
-const cleanJsonResponse = (text: string): string => {
+const cleanJsonResponse = (text: string | undefined): string => {
+  if (!text) return "";
   return text.replace(/```json\n?|```/g, "").trim();
 };
 
@@ -77,7 +78,7 @@ export const generateStudyMaterial = async (
     }
   });
 
-  return JSON.parse(cleanJsonResponse(response.text || '{"flashcards":[], "quiz":[]}'));
+  return JSON.parse(cleanJsonResponse(response.text) || '{"flashcards":[], "quiz":[]}');
 };
 
 export const enhanceNote = async (content: string): Promise<NoteEnhancement> => {
@@ -98,7 +99,7 @@ export const enhanceNote = async (content: string): Promise<NoteEnhancement> => 
       }
     }
   });
-  return JSON.parse(cleanJsonResponse(response.text || "{}")) as NoteEnhancement;
+  return JSON.parse(cleanJsonResponse(response.text) || "{}") as NoteEnhancement;
 };
 
 export const mapSkillsToCareer = async (skills: string[]): Promise<CareerPlan[]> => {
@@ -124,7 +125,7 @@ export const mapSkillsToCareer = async (skills: string[]): Promise<CareerPlan[]>
     }
   });
 
-  return JSON.parse(cleanJsonResponse(response.text || "[]"));
+  return JSON.parse(cleanJsonResponse(response.text) || "[]");
 };
 
 export const generateLogicPuzzle = async (level: number): Promise<LogicPuzzle> => {
@@ -152,7 +153,7 @@ export const generateLogicPuzzle = async (level: number): Promise<LogicPuzzle> =
       }
     }
   });
-  return JSON.parse(cleanJsonResponse(response.text || "{}")) as LogicPuzzle;
+  return JSON.parse(cleanJsonResponse(response.text) || "{}") as LogicPuzzle;
 };
 
 export const generateSketch = async (concept: string): Promise<string> => {
@@ -161,7 +162,8 @@ export const generateSketch = async (concept: string): Promise<string> => {
     model: 'gemini-2.5-flash-image',
     contents: { parts: [{ text: `A simple, educational blackboard-style sketch explaining: ${concept}.` }] }
   });
-  const base64 = response.candidates?.[0]?.content?.parts.find(p => p.inlineData)?.inlineData?.data;
+  const parts = response.candidates?.[0]?.content?.parts ?? [];
+  const base64 = parts.find(p => p.inlineData)?.inlineData?.data;
   return base64 ? `data:image/png;base64,${base64}` : "";
 };
 
@@ -173,7 +175,8 @@ export const generateInfographic = async (topic: string, content: string): Promi
       parts: [{ text: `A high-end professional educational infographic about: ${topic}. CONTENT: ${content}. STYLE: Elite, minimalist commercial.` }]
     }
   });
-  const base64 = response.candidates?.[0]?.content?.parts.find(p => p.inlineData)?.inlineData?.data;
+  const parts = response.candidates?.[0]?.content?.parts ?? [];
+  const base64 = parts.find(p => p.inlineData)?.inlineData?.data;
   return base64 ? `data:image/png;base64,${base64}` : "";
 };
 
@@ -185,7 +188,8 @@ export const generateAdImage = async (prompt: string): Promise<string> => {
       parts: [{ text: `Hyper-realistic educational promotional image for: ${prompt}. Elite commercial aesthetic.` }]
     }
   });
-  const base64 = response.candidates?.[0]?.content?.parts.find(p => p.inlineData)?.inlineData?.data;
+  const parts = response.candidates?.[0]?.content?.parts ?? [];
+  const base64 = parts.find(p => p.inlineData)?.inlineData?.data;
   return base64 ? `data:image/png;base64,${base64}` : "";
 };
 
@@ -225,7 +229,7 @@ export const generateCuratedPath = async (topic: string): Promise<CuratedPath> =
     }
   });
 
-  return JSON.parse(cleanJsonResponse(response.text || "{}")) as CuratedPath;
+  return JSON.parse(cleanJsonResponse(response.text) || "{}") as CuratedPath;
 };
 
 /**
@@ -279,5 +283,5 @@ export const generateMindMapData = async (topic: string, content: string): Promi
     }
   });
 
-  return JSON.parse(cleanJsonResponse(response.text || "{}")) as MindMapNode;
+  return JSON.parse(cleanJsonResponse(response.text) || "{}") as MindMapNode;
 };
