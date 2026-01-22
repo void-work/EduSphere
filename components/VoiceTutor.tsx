@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Mic, MicOff, Volume2, Brain, AlertCircle, Loader2, Sparkles } from 'lucide-react';
 import { GoogleGenAI, Modality, LiveServerMessage } from '@google/genai';
@@ -25,6 +26,7 @@ const VoiceTutor: React.FC = () => {
     transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [transcript]);
 
+  // Manual Base64 Implementation as per requirements
   const decode = (base64: string) => {
     const binaryString = atob(base64);
     const len = binaryString.length;
@@ -70,6 +72,7 @@ const VoiceTutor: React.FC = () => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
+      // Fix: Updated model name to gemini-2.5-flash-native-audio-preview-12-2025 as per guidelines
       const sessionPromise = ai.live.connect({
         model: 'gemini-2.5-flash-native-audio-preview-12-2025',
         callbacks: {
@@ -89,31 +92,31 @@ const VoiceTutor: React.FC = () => {
                 data: encode(new Uint8Array(int16.buffer)),
                 mimeType: 'audio/pcm;rate=16000',
               };
+              // Fix: Solely rely on sessionPromise resolves to send realtime input as per SDK guidelines to avoid race conditions.
               sessionPromise.then(s => s.sendRealtimeInput({ media: pcmBlob }));
             };
             source.connect(scriptProcessor);
             scriptProcessor.connect(inputCtx.destination);
           },
           onmessage: async (msg: LiveServerMessage) => {
-            const parts = msg.serverContent?.modelTurn?.parts ?? [];
-            const audioData = parts[0]?.inlineData?.data;
+            // Handle Audio Output
+            const audioData = msg.serverContent?.modelTurn?.parts[0]?.inlineData?.data;
             if (audioData) {
-              const ctx = audioContextRef.current;
-              if (ctx) {
-                nextStartTimeRef.current = Math.max(nextStartTimeRef.current, ctx.currentTime);
-                const buffer = await decodeAudioData(decode(audioData), ctx, 24000, 1);
-                const source = ctx.createBufferSource();
-                source.buffer = buffer;
-                source.connect(ctx.destination);
-                source.start(nextStartTimeRef.current);
-                nextStartTimeRef.current += buffer.duration;
-                sourcesRef.current.add(source);
-                source.onended = () => sourcesRef.current.delete(source);
-              }
+              const ctx = audioContextRef.current!;
+              nextStartTimeRef.current = Math.max(nextStartTimeRef.current, ctx.currentTime);
+              const buffer = await decodeAudioData(decode(audioData), ctx, 24000, 1);
+              const source = ctx.createBufferSource();
+              source.buffer = buffer;
+              source.connect(ctx.destination);
+              source.start(nextStartTimeRef.current);
+              nextStartTimeRef.current += buffer.duration;
+              sourcesRef.current.add(source);
+              source.onended = () => sourcesRef.current.delete(source);
             }
 
+            // Handle Transcription (Enabling the tutor to "Speak" English visually)
             if (msg.serverContent?.outputTranscription) {
-              const text = msg.serverContent.outputTranscription.text ?? "";
+              const text = msg.serverContent.outputTranscription.text;
               setTranscript(prev => {
                 const lastItem = prev[prev.length - 1];
                 if (lastItem && lastItem.role === 'ai') {
@@ -126,9 +129,7 @@ const VoiceTutor: React.FC = () => {
             }
 
             if (msg.serverContent?.interrupted) {
-              sourcesRef.current.forEach(s => {
-                try { s.stop(); } catch(e) {}
-              });
+              sourcesRef.current.forEach(s => s.stop());
               sourcesRef.current.clear();
               nextStartTimeRef.current = 0;
             }
@@ -141,7 +142,7 @@ const VoiceTutor: React.FC = () => {
         },
         config: {
           responseModalities: [Modality.AUDIO],
-          outputAudioTranscription: {}, 
+          outputAudioTranscription: {}, // Enable seeing what the AI says
           speechConfig: { 
             voiceConfig: { 
               prebuiltVoiceConfig: { voiceName: 'Zephyr' } 

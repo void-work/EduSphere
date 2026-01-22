@@ -10,12 +10,13 @@ import {
   Layers, 
   LogOut,
   Sparkles,
-  ChevronRight,
   Network,
   Menu,
   X,
   User as UserIcon,
-  Gamepad2
+  Gamepad2,
+  ScanSearch,
+  Box
 } from 'lucide-react';
 import { ToolType, User, CognitiveShift } from './types';
 import TextbookCompanion from './components/TextbookCompanion';
@@ -29,6 +30,8 @@ import Dashboard from './components/Dashboard';
 import InfographicCreator from './components/InfographicCreator';
 import Curator from './components/Curator';
 import MindMapCreator from './components/MindMapCreator';
+import AIDetector from './components/AIDetector';
+import ARLab from './components/ARLab';
 
 const App: React.FC = () => {
   const [activeTool, setActiveTool] = useState<ToolType>(ToolType.DASHBOARD);
@@ -139,6 +142,8 @@ const App: React.FC = () => {
       case ToolType.INFOGRAPHIC: return <InfographicCreator onComplete={(xp) => updateStats(xp, "Infographic Generation", ToolType.INFOGRAPHIC)} />;
       case ToolType.CURATOR: return <Curator onComplete={(xp) => updateStats(xp, "Curriculum Mapping", ToolType.CURATOR)} />;
       case ToolType.MINDMAP: return <MindMapCreator />;
+      case ToolType.DETECTOR: return <AIDetector onComplete={(xp) => updateStats(xp, "Integrity Scan", ToolType.DETECTOR)} />;
+      case ToolType.AR_LAB: return <ARLab onComplete={(xp) => updateStats(xp, "Spatial Visualization", ToolType.AR_LAB)} />;
       default: return <Dashboard onSelectTool={selectTool} user={user} />;
     }
   };
@@ -177,10 +182,15 @@ const App: React.FC = () => {
           <NavItem icon={<BookOpen className="w-4 h-4" />} label="Textbook AI" active={activeTool === ToolType.TEXTBOOK} onClick={() => selectTool(ToolType.TEXTBOOK)} />
           <NavItem icon={<Sparkles className="w-4 h-4" />} label="AI Curator" active={activeTool === ToolType.CURATOR} onClick={() => selectTool(ToolType.CURATOR)} />
           <NavItem icon={<Network className="w-4 h-4" />} label="Neural Map" active={activeTool === ToolType.MINDMAP} onClick={() => selectTool(ToolType.MINDMAP)} />
+          <NavItem icon={<ScanSearch className="w-4 h-4" />} label="AI Detector" active={activeTool === ToolType.DETECTOR} onClick={() => selectTool(ToolType.DETECTOR)} />
+          <div className="mt-8 mb-4 px-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Visualization</div>
           <NavItem icon={<Layers className="w-4 h-4" />} label="Infographic Pro" active={activeTool === ToolType.INFOGRAPHIC} onClick={() => selectTool(ToolType.INFOGRAPHIC)} />
+          <NavItem icon={<Box className="w-4 h-4" />} label="AR Lab" active={activeTool === ToolType.AR_LAB} onClick={() => selectTool(ToolType.AR_LAB)} />
+          <NavItem icon={<Zap className="w-4 h-4" />} label="Visual Concepts" active={activeTool === ToolType.VISUAL} onClick={() => selectTool(ToolType.VISUAL)} />
+          <div className="mt-8 mb-4 px-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Assessment</div>
           <NavItem icon={<ClipboardCheck className="w-4 h-4" />} label="Exam Sim" active={activeTool === ToolType.EXAM} onClick={() => selectTool(ToolType.EXAM)} />
           <NavItem icon={<PenTool className="w-4 h-4" />} label="Smart Notes" active={activeTool === ToolType.NOTES} onClick={() => selectTool(ToolType.NOTES)} />
-          <div className="mt-8 mb-4 px-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Experiments</div>
+          <div className="mt-8 mb-4 px-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Learning Hub</div>
           <NavItem icon={<Mic className="w-4 h-4" />} label="Live Tutor" active={activeTool === ToolType.TUTOR} onClick={() => selectTool(ToolType.TUTOR)} />
           <NavItem icon={<Gamepad2 className="w-4 h-4" />} label="Kids Logic" active={activeTool === ToolType.KIDS} onClick={() => selectTool(ToolType.KIDS)} />
           <NavItem icon={<Briefcase className="w-4 h-4" />} label="Skill Bridge" active={activeTool === ToolType.CAREER} onClick={() => selectTool(ToolType.CAREER)} />

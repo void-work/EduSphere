@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { Flashcard, QuizQuestion, CareerPlan, CuratedPath, MindMapNode } from "../types";
 
@@ -15,12 +16,40 @@ export interface NoteEnhancement {
   suggestedDifficulty: number;
 }
 
-/**
- * Utility to clean AI response text by removing potential markdown formatting
- */
-const cleanJsonResponse = (text: string | undefined): string => {
-  if (!text) return "";
+export interface IntegrityReport {
+  aiScore: number;
+  explanation: string;
+  detectedPatterns: string[];
+}
+
+const cleanJsonResponse = (text: string): string => {
   return text.replace(/```json\n?|```/g, "").trim();
+};
+
+// Fix: Implemented generateLogicPuzzle function using gemini-3-flash-preview as requested by the KidsCoach component.
+export const generateLogicPuzzle = async (level: number): Promise<LogicPuzzle> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-flash-preview',
+    contents: `Generate a logic puzzle for a student at difficulty level ${level} (where 1 is simple and 12 is competition grade). 
+    The puzzle should be engaging and test logical deduction or lateral thinking.`,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          type: { type: Type.STRING, description: "The category of the logic puzzle." },
+          question: { type: Type.STRING, description: "The puzzle description." },
+          options: { type: Type.ARRAY, items: { type: Type.STRING }, description: "4 multiple choice options." },
+          answer: { type: Type.STRING, description: "The exact text of the correct answer option." },
+          hint: { type: Type.STRING, description: "A helpful hint for the student." }
+        },
+        required: ["type", "question", "options", "answer", "hint"]
+      }
+    }
+  });
+
+  return JSON.parse(cleanJsonResponse(response.text || "{}")) as LogicPuzzle;
 };
 
 export const generateStudyMaterial = async (
@@ -35,9 +64,7 @@ export const generateStudyMaterial = async (
     
     TASK: Perform an ATOMIC DECOMPOSITION of the provided text. 
     1. Create a flashcard for EVERY single technical term, definition, date, formula, and key concept mentioned. 
-    2. Do NOT summarize; capture the full granularity of the text. 
-    3. For every card, the "source" field MUST contain a specific reference (e.g. "Section 1.2: Theory of Evolution").
-    4. Generate a 5-question high-level mastery quiz.
+    2. Generate a 5-question high-level mastery quiz.
     
     TEXT CONTENT:
     \n\n ${text}`,
@@ -77,8 +104,7 @@ export const generateStudyMaterial = async (
     }
   });
 
-  const responseText = response.text || "";
-  return JSON.parse(cleanJsonResponse(responseText) || '{"flashcards":[], "quiz":[]}');
+  return JSON.parse(cleanJsonResponse(response.text || '{"flashcards":[], "quiz":[]}'));
 };
 
 export const enhanceNote = async (content: string): Promise<NoteEnhancement> => {
@@ -99,8 +125,7 @@ export const enhanceNote = async (content: string): Promise<NoteEnhancement> => 
       }
     }
   });
-  const responseText = response.text || "";
-  return JSON.parse(cleanJsonResponse(responseText) || "{\"summary\":\"\",\"keyConcepts\":[],\"suggestedDifficulty\":1}") as NoteEnhancement;
+  return JSON.parse(cleanJsonResponse(response.text || "{}")) as NoteEnhancement;
 };
 
 export const mapSkillsToCareer = async (skills: string[]): Promise<CareerPlan[]> => {
@@ -126,37 +151,39 @@ export const mapSkillsToCareer = async (skills: string[]): Promise<CareerPlan[]>
     }
   });
 
-  const responseText = response.text || "";
-  return JSON.parse(cleanJsonResponse(responseText) || "[]");
+  return JSON.parse(cleanJsonResponse(response.text || "[]"));
 };
 
-export const generateLogicPuzzle = async (level: number): Promise<LogicPuzzle> => {
+export const analyzeTextIntegrity = async (text: string): Promise<IntegrityReport> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const modelToUse = level >= 12 ? 'gemini-3-pro-preview' : 'gemini-3-flash-preview';
-  const instruction = level >= 12 
-    ? "Generate a world-class International Logic Olympiad question."
-    : `Generate a fun logic puzzle for a child level ${level}.`;
-
   const response = await ai.models.generateContent({
-    model: modelToUse,
-    contents: instruction,
+    model: 'gemini-3-flash-preview',
+    contents: `Analyze the following text for AI-generated patterns and linguistic integrity: \n\n ${text}`,
     config: {
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,
         properties: {
-          type: { type: Type.STRING },
-          question: { type: Type.STRING },
-          options: { type: Type.ARRAY, items: { type: Type.STRING } },
-          answer: { type: Type.STRING },
-          hint: { type: Type.STRING }
+          aiScore: { type: Type.NUMBER, description: "Scale 0-100 where 100 is likely AI" },
+          explanation: { type: Type.STRING },
+          detectedPatterns: { type: Type.ARRAY, items: { type: Type.STRING } }
         },
-        required: ["type", "question", "options", "answer", "hint"]
+        required: ["aiScore", "explanation", "detectedPatterns"]
       }
     }
   });
-  const responseText = response.text || "";
-  return JSON.parse(cleanJsonResponse(responseText) || "{\"type\":\"\",\"question\":\"\",\"options\":[],\"answer\":\"\",\"hint\":\"\"}") as LogicPuzzle;
+  return JSON.parse(cleanJsonResponse(response.text || "{}")) as IntegrityReport;
+};
+
+export const generate3DConceptView = async (concept: string): Promise<string> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-pro-image-preview',
+    contents: { parts: [{ text: `A photorealistic, highly detailed 3D scientific visualization of: ${concept}. Cinematic lighting, white laboratory background, ultra-high resolution.` }] },
+    config: { imageConfig: { aspectRatio: "16:9", imageSize: "1K" } }
+  });
+  const part = response.candidates?.[0]?.content?.parts.find(p => p.inlineData);
+  return part?.inlineData?.data ? `data:image/png;base64,${part.inlineData.data}` : "";
 };
 
 export const generateSketch = async (concept: string): Promise<string> => {
@@ -165,9 +192,8 @@ export const generateSketch = async (concept: string): Promise<string> => {
     model: 'gemini-2.5-flash-image',
     contents: { parts: [{ text: `A simple, educational blackboard-style sketch explaining: ${concept}.` }] }
   });
-  const parts = response.candidates?.[0]?.content?.parts ?? [];
-  const base64 = parts.find(p => p.inlineData)?.inlineData?.data;
-  return base64 ? `data:image/png;base64,${base64}` : "";
+  const part = response.candidates?.[0]?.content?.parts.find(p => p.inlineData);
+  return part?.inlineData?.data ? `data:image/png;base64,${part.inlineData.data}` : "";
 };
 
 export const generateInfographic = async (topic: string, content: string): Promise<string> => {
@@ -178,17 +204,15 @@ export const generateInfographic = async (topic: string, content: string): Promi
       parts: [{ text: `A high-end professional educational infographic about: ${topic}. CONTENT: ${content}. STYLE: Elite, minimalist commercial.` }]
     }
   });
-  const parts = response.candidates?.[0]?.content?.parts ?? [];
-  const base64 = parts.find(p => p.inlineData)?.inlineData?.data;
-  return base64 ? `data:image/png;base64,${base64}` : "";
+  const part = response.candidates?.[0]?.content?.parts.find(p => p.inlineData);
+  return part?.inlineData?.data ? `data:image/png;base64,${part.inlineData.data}` : "";
 };
 
 export const generateCuratedPath = async (topic: string): Promise<CuratedPath> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
-    contents: `You are a world-class educational curator. Create a structured learning roadmap for the topic: "${topic}".
-    The roadmap should be professional, logical, and broken down into sequential modules.`,
+    contents: `You are a world-class educational curator. Create a structured learning roadmap for the topic: "${topic}".`,
     config: {
       responseMimeType: "application/json",
       responseSchema: {
@@ -215,21 +239,14 @@ export const generateCuratedPath = async (topic: string): Promise<CuratedPath> =
       }
     }
   });
-
-  const responseText = response.text || "";
-  return JSON.parse(cleanJsonResponse(responseText) || "{\"topic\":\"\",\"description\":\"\",\"modules\":[],\"masteryOutcome\":\"\"}") as CuratedPath;
+  return JSON.parse(cleanJsonResponse(response.text || "{}")) as CuratedPath;
 };
 
 export const generateMindMapData = async (topic: string, content: string): Promise<MindMapNode> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
-    contents: `You are a semantic analysis expert. Perform a deep hierarchical decomposition of the following topic and content into a structured mind map format.
-    
-    TOPIC: "${topic}"
-    CONTENT: "${content}"
-    
-    Return a recursive JSON structure. Each node must have a unique 'id', a clear 'label', and an optional 'description'.`,
+    contents: `Perform a deep hierarchical decomposition of: TOPIC: "${topic}", CONTENT: "${content}" into a structured mind map.`,
     config: {
       responseMimeType: "application/json",
       responseSchema: {
@@ -246,18 +263,7 @@ export const generateMindMapData = async (topic: string, content: string): Promi
                 id: { type: Type.STRING },
                 label: { type: Type.STRING },
                 description: { type: Type.STRING },
-                children: {
-                  type: Type.ARRAY,
-                  items: {
-                    type: Type.OBJECT,
-                    properties: {
-                      id: { type: Type.STRING },
-                      label: { type: Type.STRING },
-                      description: { type: Type.STRING }
-                    },
-                    required: ["id", "label"]
-                  }
-                }
+                children: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { id: {type:Type.STRING}, label: {type:Type.STRING} }, required: ["id", "label"] } }
               },
               required: ["id", "label"]
             }
@@ -267,7 +273,5 @@ export const generateMindMapData = async (topic: string, content: string): Promi
       }
     }
   });
-
-  const responseText = response.text || "";
-  return JSON.parse(cleanJsonResponse(responseText) || "{\"id\":\"root\",\"label\":\"\"}") as MindMapNode;
+  return JSON.parse(cleanJsonResponse(response.text || "{}")) as MindMapNode;
 };
