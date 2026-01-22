@@ -8,15 +8,16 @@ import {
   PenTool, 
   Zap, 
   Brain, 
-  Gamepad2, 
   Layers, 
-  User as UserIcon, 
   LogOut,
   Sparkles,
   ChevronRight,
   Network,
   Menu,
-  X
+  X,
+  User as UserIcon,
+  // Fix: Added missing Gamepad2 import from lucide-react
+  Gamepad2
 } from 'lucide-react';
 import { ToolType, User, CognitiveShift } from './types';
 import TextbookCompanion from './components/TextbookCompanion';
@@ -37,33 +38,13 @@ const App: React.FC = () => {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Load user from persistent storage
   useEffect(() => {
     const savedUser = localStorage.getItem('edu_user');
     if (savedUser) {
       const parsedUser: User = JSON.parse(savedUser);
-      
-      // Update streak logic
-      const lastActiveDate = new Date(parsedUser.lastActive);
-      const today = new Date();
-      const diffTime = Math.abs(today.getTime() - lastActiveDate.getTime());
-      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-      
-      let updatedStreak = parsedUser.streak;
-      if (diffDays === 1) {
-        updatedStreak += 1;
-      } else if (diffDays > 1) {
-        updatedStreak = 1;
+      if (parsedUser.isLoggedIn) {
+        setUser(parsedUser);
       }
-      
-      const updatedUser = { 
-        ...parsedUser, 
-        streak: updatedStreak, 
-        lastActive: today.toISOString() 
-      };
-      
-      setUser(updatedUser);
-      localStorage.setItem('edu_user', JSON.stringify(updatedUser));
     }
   }, []);
 
@@ -74,7 +55,7 @@ const App: React.FC = () => {
       const newShift: CognitiveShift = {
         label: activityLabel,
         xp: `+${xpGain} XP`,
-        date: 'Just now',
+        date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         type: tool
       };
       
@@ -98,28 +79,19 @@ const App: React.FC = () => {
     
     const fullName = `${firstName} ${surname}`.trim() || 'Alex Learner';
     
-    // Check if user already exists in storage to preserve stats
-    const existing = localStorage.getItem('edu_user');
-    let baseUser: User;
+    const newUser: User = { 
+      id: Date.now().toString(), 
+      name: fullName, 
+      email: email || 'user@edusphere.ai', 
+      isLoggedIn: true,
+      xp: 0,
+      streak: 1,
+      lastActive: new Date().toISOString(),
+      cognitiveShifts: []
+    };
     
-    if (existing) {
-      baseUser = JSON.parse(existing);
-    } else {
-      baseUser = { 
-        id: Date.now().toString(), 
-        name: fullName, 
-        email: email || 'alex@example.com', 
-        isLoggedIn: true,
-        xp: 0,
-        streak: 1,
-        lastActive: new Date().toISOString(),
-        cognitiveShifts: []
-      };
-    }
-    
-    const finalUser = { ...baseUser, isLoggedIn: true, name: fullName, email: email };
-    setUser(finalUser);
-    localStorage.setItem('edu_user', JSON.stringify(finalUser));
+    setUser(newUser);
+    localStorage.setItem('edu_user', JSON.stringify(newUser));
     setIsLoginModalOpen(false);
   };
 
@@ -136,22 +108,23 @@ const App: React.FC = () => {
   const selectTool = (tool: ToolType) => {
     setActiveTool(tool);
     setIsMobileMenuOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const renderTool = () => {
     if (!user && activeTool !== ToolType.DASHBOARD) {
       return (
-        <div className="flex flex-col items-center justify-center h-full text-center px-6 py-12 md:p-12 bg-white/80 backdrop-blur-xl rounded-[2rem] md:rounded-[3rem] shadow-2xl border border-white/40 animate-in zoom-in-95 duration-500">
-          <div className="w-20 h-20 md:w-24 md:h-24 bg-indigo-600 rounded-[1.5rem] md:rounded-[2rem] flex items-center justify-center mb-8 shadow-2xl shadow-indigo-200/50">
-            <Brain className="w-10 h-10 md:w-12 md:h-12 text-white" />
+        <div className="flex flex-col items-center justify-center h-[60vh] text-center px-6 animate-in zoom-in-95 duration-500">
+          <div className="w-20 h-20 bg-indigo-600 rounded-[2rem] flex items-center justify-center mb-8 shadow-2xl shadow-indigo-200">
+            <UserIcon className="w-10 h-10 text-white" />
           </div>
-          <h2 className="text-2xl md:text-3xl font-black mb-4 text-slate-900 tracking-tight">Identify Yourself</h2>
-          <p className="text-slate-500 max-w-sm mb-8 font-medium leading-relaxed">Sign in with your name and surname to access advanced AI tutoring features.</p>
+          <h2 className="text-3xl font-black mb-4 text-slate-900">Identification Required</h2>
+          <p className="text-slate-500 max-w-xs mb-8 font-bold leading-relaxed">Please sign in to access your personalized AI tutoring environment.</p>
           <button 
             onClick={() => setIsLoginModalOpen(true)}
-            className="w-full md:w-auto px-10 py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3"
+            className="px-10 py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl"
           >
-            Sign In Now <ChevronRight className="w-5 h-5" />
+            Sign In Now
           </button>
         </div>
       );
@@ -160,135 +133,106 @@ const App: React.FC = () => {
     switch (activeTool) {
       case ToolType.TEXTBOOK: return <TextbookCompanion onComplete={(xp) => updateStats(xp, "Textbook Synthesis", ToolType.TEXTBOOK)} />;
       case ToolType.CAREER: return <SkillBridge />;
-      case ToolType.EXAM: return <ExamSimulator onComplete={(xp, topic) => updateStats(xp, `${topic} Exam`, ToolType.EXAM)} />;
+      case ToolType.EXAM: return <ExamSimulator onComplete={(xp, topic) => updateStats(xp, `${topic} Assessment`, ToolType.EXAM)} />;
       case ToolType.TUTOR: return <VoiceTutor />;
       case ToolType.VISUAL: return <VisualConceptBuilder />;
       case ToolType.KIDS: return <KidsCoach onXpGain={(xp) => updateStats(xp, "Logic Mission", ToolType.KIDS)} />;
-      case ToolType.NOTES: return <Notetaker onEnhance={(xp) => updateStats(xp, "Smart Note Enhancement", ToolType.NOTES)} />;
-      case ToolType.INFOGRAPHIC: return <InfographicCreator onComplete={(xp) => updateStats(xp, "Infographic Synthesis", ToolType.INFOGRAPHIC)} />;
-      case ToolType.CURATOR: return <Curator onComplete={(xp) => updateStats(xp, "Roadmap Generation", ToolType.CURATOR)} />;
+      case ToolType.NOTES: return <Notetaker onEnhance={(xp) => updateStats(xp, "Note Enhancement", ToolType.NOTES)} />;
+      case ToolType.INFOGRAPHIC: return <InfographicCreator onComplete={(xp) => updateStats(xp, "Infographic Generation", ToolType.INFOGRAPHIC)} />;
+      case ToolType.CURATOR: return <Curator onComplete={(xp) => updateStats(xp, "Curriculum Mapping", ToolType.CURATOR)} />;
       case ToolType.MINDMAP: return <MindMapCreator />;
       default: return <Dashboard onSelectTool={selectTool} user={user} />;
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row text-slate-900 selection:bg-indigo-500 selection:text-white">
-      {/* Mobile Top Header */}
+    <div className="min-h-screen flex flex-col md:flex-row text-slate-900 bg-transparent">
+      {/* Mobile Nav */}
       <div className="md:hidden flex items-center justify-between p-5 bg-white border-b border-slate-200 sticky top-0 z-50">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-indigo-100 text-white">
+        <div className="flex items-center gap-3" onClick={() => setActiveTool(ToolType.DASHBOARD)}>
+          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white">
             <Brain className="w-6 h-6" />
           </div>
-          <span className="text-xl font-black tracking-tighter text-slate-900">EduSphere</span>
+          <span className="text-xl font-black tracking-tighter">EduSphere</span>
         </div>
-        <button 
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="p-2 text-slate-600 hover:text-indigo-600 transition-colors"
-        >
+        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2">
           {isMobileMenuOpen ? <X className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
         </button>
       </div>
 
-      {/* Sidebar Overlay */}
-      {isMobileMenuOpen && (
-        <div 
-          className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 md:hidden"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
-
       {/* Sidebar */}
       <aside className={`
-        fixed inset-y-0 left-0 w-72 glass border-r border-slate-200/40 flex flex-col z-[45] transition-transform duration-300 transform
-        md:translate-x-0 md:static md:h-screen md:z-30
+        fixed inset-y-0 left-0 w-72 glass border-r border-slate-200 p-8 flex flex-col z-50 transition-transform duration-300
+        md:translate-x-0 md:static md:h-screen
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
-        <div className="p-8 hidden md:flex items-center gap-4 mb-4">
-          <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-xl shadow-indigo-100 text-white">
+        <div className="hidden md:flex items-center gap-4 mb-12">
+          <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-xl text-white">
             <Brain className="w-7 h-7" />
           </div>
-          <span className="text-2xl font-black tracking-tighter text-slate-900">EduSphere</span>
+          <span className="text-2xl font-black tracking-tighter">EduSphere</span>
         </div>
 
-        <nav className="flex-1 p-6 space-y-2 overflow-y-auto custom-scrollbar">
+        <nav className="flex-1 space-y-2 overflow-y-auto custom-scrollbar">
           <NavItem icon={<Sparkles className="w-5 h-5" />} label="Dashboard" active={activeTool === ToolType.DASHBOARD} onClick={() => selectTool(ToolType.DASHBOARD)} />
-          <div className="mt-8 mb-4 px-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Curriculum</div>
+          <div className="mt-8 mb-4 px-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Core Modules</div>
           <NavItem icon={<BookOpen className="w-5 h-5" />} label="Textbook AI" active={activeTool === ToolType.TEXTBOOK} onClick={() => selectTool(ToolType.TEXTBOOK)} />
-          <NavItem icon={<Sparkles className="w-5 h-5 text-indigo-400" />} label="AI Curator" active={activeTool === ToolType.CURATOR} onClick={() => selectTool(ToolType.CURATOR)} />
-          <NavItem icon={<Network className="w-5 h-5" />} label="MindMap Neural" active={activeTool === ToolType.MINDMAP} onClick={() => selectTool(ToolType.MINDMAP)} />
+          <NavItem icon={<Sparkles className="w-5 h-5" />} label="AI Curator" active={activeTool === ToolType.CURATOR} onClick={() => selectTool(ToolType.CURATOR)} />
+          <NavItem icon={<Network className="w-5 h-5" />} label="Neural Map" active={activeTool === ToolType.MINDMAP} onClick={() => selectTool(ToolType.MINDMAP)} />
           <NavItem icon={<Layers className="w-5 h-5" />} label="Infographic Pro" active={activeTool === ToolType.INFOGRAPHIC} onClick={() => selectTool(ToolType.INFOGRAPHIC)} />
-          <NavItem icon={<Briefcase className="w-5 h-5" />} label="Career Bridge" active={activeTool === ToolType.CAREER} onClick={() => selectTool(ToolType.CAREER)} />
           <NavItem icon={<ClipboardCheck className="w-5 h-5" />} label="Exam Sim" active={activeTool === ToolType.EXAM} onClick={() => selectTool(ToolType.EXAM)} />
           <NavItem icon={<PenTool className="w-5 h-5" />} label="Smart Notes" active={activeTool === ToolType.NOTES} onClick={() => selectTool(ToolType.NOTES)} />
-          <div className="mt-8 mb-4 px-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">AI Experiments</div>
+          <div className="mt-8 mb-4 px-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Experiments</div>
           <NavItem icon={<Mic className="w-5 h-5" />} label="Live Tutor" active={activeTool === ToolType.TUTOR} onClick={() => selectTool(ToolType.TUTOR)} />
-          <NavItem icon={<Zap className="w-5 h-5" />} label="Concept Sketch" active={activeTool === ToolType.VISUAL} onClick={() => selectTool(ToolType.VISUAL)} />
           <NavItem icon={<Gamepad2 className="w-5 h-5" />} label="Kids Logic" active={activeTool === ToolType.KIDS} onClick={() => selectTool(ToolType.KIDS)} />
         </nav>
 
-        <div className="p-6">
+        <div className="mt-8">
           {user ? (
-            <div className="flex items-center justify-between bg-slate-100/50 p-4 rounded-3xl border border-slate-200/50 shadow-sm">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center shrink-0">
-                  <span className="text-white text-xs font-black">{user.name.charAt(0)}</span>
-                </div>
+            <div className="p-4 bg-slate-100 rounded-3xl flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 overflow-hidden">
+                <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-black shrink-0">{user.name.charAt(0)}</div>
                 <div className="min-w-0">
-                  <p className="text-sm font-black truncate text-slate-900">{user.name}</p>
-                  <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Lvl {Math.floor(user.xp / 1000) + 1}</p>
+                  <p className="text-sm font-black truncate">{user.name}</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{user.xp} XP</p>
                 </div>
               </div>
-              <button onClick={handleLogout} className="p-2 text-slate-400 hover:text-red-500 transition-colors" title="Logout"><LogOut className="w-4 h-4" /></button>
+              <button onClick={handleLogout} className="text-slate-400 hover:text-red-500 transition-colors shrink-0">
+                <LogOut className="w-4 h-4" />
+              </button>
             </div>
           ) : (
-            <button onClick={() => { setIsLoginModalOpen(true); setIsMobileMenuOpen(false); }} className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 flex items-center justify-center gap-2 group">
-              Sign In <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            <button onClick={() => setIsLoginModalOpen(true)} className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100">
+              Sign In
             </button>
           )}
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto p-4 md:p-12 transition-all">
-        <div className="max-w-6xl mx-auto h-full">
+      <main className="flex-1 p-6 md:p-12 overflow-y-auto custom-scrollbar">
+        <div className="max-w-6xl mx-auto">
           {renderTool()}
         </div>
       </main>
 
       {/* Login Modal */}
       {isLoginModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xl flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300">
-          <div className="bg-white rounded-[2rem] md:rounded-[3rem] shadow-2xl w-full max-w-md p-8 md:p-12 animate-in zoom-in-95 duration-300 border border-white max-h-[90vh] overflow-y-auto">
-            <div className="w-16 h-16 md:w-20 md:h-20 bg-indigo-600 rounded-2xl md:rounded-3xl flex items-center justify-center mb-8 shadow-2xl shadow-indigo-100 text-white">
-               <Brain className="w-8 h-8 md:w-10 md:h-10" />
-            </div>
-            <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-3 text-slate-900">Welcome Back</h2>
-            <p className="text-slate-500 mb-8 md:mb-10 font-bold">Your personalized AI tutor is ready when you are.</p>
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xl flex items-center justify-center z-[100] p-4">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md p-10 animate-in zoom-in-95 duration-300">
+            <h2 className="text-3xl font-black mb-2 text-slate-900">Welcome</h2>
+            <p className="text-slate-500 mb-8 font-bold">Access your unified learning workspace.</p>
             <form onSubmit={handleLogin} className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">First Name</label>
-                  <input name="firstName" type="text" required className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-bold" placeholder="Jane" />
-                </div>
-                <div className="space-y-2">
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Surname</label>
-                  <input name="surname" type="text" required className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-bold" placeholder="Doe" />
-                </div>
+              <div className="grid grid-cols-2 gap-4">
+                <input name="firstName" required placeholder="First Name" className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-indigo-500 font-bold" />
+                <input name="surname" required placeholder="Surname" className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-indigo-500 font-bold" />
               </div>
-              <div className="space-y-2">
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Email Address</label>
-                <input name="email" type="email" required className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-bold" placeholder="name@example.com" />
-              </div>
-              <div className="space-y-2">
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Password</label>
-                <input name="password" type="password" required className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-bold" placeholder="••••••••" />
-              </div>
-              <button type="submit" className="w-full py-6 bg-indigo-600 text-white rounded-[1.5rem] font-black text-sm uppercase tracking-[0.2em] hover:bg-indigo-700 transition-all shadow-2xl shadow-indigo-100 active:scale-95 flex items-center justify-center gap-3">
-                Launch Experience <Sparkles className="w-5 h-5 text-amber-400" />
+              <input name="email" type="email" required placeholder="Email Address" className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-indigo-500 font-bold" />
+              <button type="submit" className="w-full py-6 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl">
+                Enter EduSphere
               </button>
+              <button type="button" onClick={() => setIsLoginModalOpen(false)} className="w-full text-slate-400 font-black text-xs uppercase tracking-widest">Cancel</button>
             </form>
-            <button onClick={() => setIsLoginModalOpen(false)} className="w-full mt-6 py-2 text-slate-400 hover:text-slate-900 transition-colors text-xs font-black uppercase tracking-widest">Cancel Entry</button>
           </div>
         </div>
       )}
@@ -306,13 +250,11 @@ interface NavItemProps {
 const NavItem: React.FC<NavItemProps> = ({ icon, label, active, onClick }) => (
   <button 
     onClick={onClick}
-    className={`w-full flex items-center gap-4 px-5 py-4 rounded-[1.25rem] transition-all duration-300 group ${
-      active 
-        ? 'bg-white text-indigo-600 shadow-xl shadow-slate-200/50 scale-[1.02] md:scale-105 border border-slate-100' 
-        : 'text-slate-400 hover:bg-white/50 hover:text-slate-900'
+    className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 ${
+      active ? 'bg-white shadow-xl text-indigo-600 scale-[1.05] border border-slate-100' : 'text-slate-400 hover:bg-white/50 hover:text-slate-900'
     }`}
   >
-    <span className={`${active ? 'text-indigo-600' : 'text-slate-300 group-hover:text-indigo-500 transition-colors'}`}>{icon}</span>
+    <span className={active ? 'text-indigo-600' : 'text-slate-300'}>{icon}</span>
     <span className="text-sm font-black tracking-tight">{label}</span>
   </button>
 );
